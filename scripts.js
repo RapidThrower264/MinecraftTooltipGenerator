@@ -453,6 +453,12 @@ class MCStat {
     }
 }
 
+function minecraftShadow(hex) {
+    let colorInt = parseInt(hex.replace(/^#/, ""), 16);
+    let shadowInt = (colorInt & 0xFCFCFC) >> 2;
+    return "#" + shadowInt.toString(16).padStart(6, "0");
+}
+
 class TextManager {
     constructor(settings) {
         this.lines = [];
@@ -495,6 +501,16 @@ class TextManager {
 
                 if (currentSection.length == 0) {
                     continue;
+                }
+                else if (currentSection.length > 8 && currentSection.startsWith("&#")) {
+                    let hexCandidate = currentSection.substring(1, 8);
+                    if (/^#[0-9a-fA-F]{6}$/.test(hexCandidate)) {
+                        styles = DEFAULT_STYLES.slice();
+                        currentColor = new MCColor(null, "CUSTOM", hexCandidate, minecraftShadow(hexCandidate));
+                        currentLine.add(new LineSegment(currentSection.substring(8), currentColor, styles));
+                    } else {
+                        currentLine.segments[currentLine.length - 1].add(currentSection);
+                    }
                 }
                 else if (currentSection.length == 1 || currentSection.charAt(0) != "&" || !(REGISTERED_CODES.includes(currentSection.charAt(1)))) {
                     currentLine.segments[currentLine.length - 1].add(currentSection);
