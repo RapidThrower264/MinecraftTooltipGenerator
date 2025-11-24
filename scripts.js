@@ -87,6 +87,14 @@ class MinecraftGenerator {
         }
     }
 
+    changeWrapperSize() {
+        let activeCanvas = this.hasBlockRendered ? this.combinedCanvas : this.textCanvas;
+        
+        this.canvasWrapper.style.width = `${activeCanvas.width * this.settings.imageScale}px`;
+        this.canvasWrapper.style.height = `${activeCanvas.height * this.settings.imageScale}px`;
+        activeCanvas.style.transform = `scale(${this.settings.imageScale})`;
+    }
+
     async copyToClipboard() {
         try {
             const blob = await this.canvas.getImageFromCanvas();
@@ -340,17 +348,10 @@ class MinecraftCanvas {
         this.height = height;
         this.drawableWidth = width - LEFT_OFFSET;
 
-        this.changeWrapperSize();
         this.drawBackground();
         if (saveData) {
             this.ctx.putImageData(savedData, LEFT_OFFSET, TOP_OFFSET);
         }
-    }
-
-    changeWrapperSize() {
-        this.canvas.style.transform = `scale(${this.settings.imageScale})`;
-        this.canvasWrapper.style.width = `${this.width * this.settings.imageScale}px`
-        this.canvasWrapper.style.height = `${this.height * this.settings.imageScale}px`
     }
 
     async getImageFromCanvas() {
@@ -1028,8 +1029,31 @@ window.addEventListener("load", async (event) => {
     let settingInputs = document.querySelectorAll(".setting");
     settingInputs.forEach(input => {
         input.addEventListener("change", (event) => {
-            let result = event.target.type === "checkbox" ? event.target.checked : event.target.value;
-            settings.changeSetting(event.target.id, result);
+            if (event.target.type === "checkbox") {
+                result = event.target.checked;
+                
+                if (event.target.getAttribute("toggle-visibility")) {
+                    let targetSection = document.getElementById(event.target.getAttribute("toggle-visibility"));
+                    result ? targetSection.classList.add("active") : targetSection.classList.remove("active");
+                }
+            }
+            else if (event.target.getAttribute("option-with-custom")) {
+                let colorPicker = document.getElementById(event.target.getAttribute("option-with-custom"));
+                if (event.target.value != "custom") {
+                    result = parseInt(event.target.value);
+                    colorPicker.value = "#" + new Uint8Array([(result >> 16) & 0xff, (result >> 8) & 0xff, result & 0xff]).toHex();
+                    colorPicker.disabled = true;
+                } 
+                else
+                    colorPicker.disabled = false;
+            }
+            else if (event.target.type === "color")
+                result = parseInt(event.target.value.replaceAll("#", ""), 16);
+            else
+                result = event.target.value;
+
+            if (result !== undefined)
+            settings.changeSetting(event.target.getAttribute("setting"), result);
         });
 
         if (input.type == "range") {

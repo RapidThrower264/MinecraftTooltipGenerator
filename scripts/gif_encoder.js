@@ -65,7 +65,7 @@ class GifEncoder {
         this.writeUInt(imageHeight);
         // writes default flags for transparency and sorting, and dynamic for the colors available;
         this.writeByte(240 + Math.ceil(Math.log2(requiredColors) - 1));
-        this.writeByte(0); // sets the background colour to the first value.
+        this.writeByte(0); // sets the background color to the first value.
         this.writeByte(0); // sets the pixel aspect ratio
     }
 

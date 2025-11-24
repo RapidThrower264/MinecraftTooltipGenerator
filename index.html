@@ -93,15 +93,15 @@
                             <div class="setting-section">
                                 <div class="setting-container">
                                     <span>Add Gap Between First Line of Lore?</span>
-                                    <input type="checkbox" id="first-line-gap" class="setting">
+                                    <input type="checkbox" id="first-line-gap" class="setting" setting="first-line-gap">
                                 </div>
                                 <div class="setting-container">
                                     <span>Render Background?</span>
-                                    <input type="checkbox" id="render-background" class="setting">
+                                    <input type="checkbox" id="render-background" class="setting" setting="render-background">
                                 </div>
                                 <div class="setting-container">
                                     <span>Font Version</span>
-                                    <select id="font-version" class="setting">
+                                    <select id="font-version" class="setting" setting="font-version">
                                         <option value="0">1.8.9 Fonts</option>
                                         <option value="1">1.21 Fonts</option>
                                     </select>
@@ -111,12 +111,12 @@
                             <div class="setting-section">
                                 <div class="setting-container vertical">
                                     <span>Image Refresh Interval</span>
-                                    <input type="range" id="update-period" class="setting" min="0.5" max="10" step="0.5" data-format="%s seconds">
+                                    <input type="range" id="update-period" class="setting" setting="update-period" min="0.5" max="10" step="0.5" data-format="%s seconds">
                                     <span id="update-period-display" class="range-display">Infinite seconds</span>
                                 </div>
                                 <div class="setting-container vertical">
                                     <span>Canvas Scale</span>
-                                    <input type="range" id="image-scale" class="setting" min="0.5" max="3" step="0.25" data-format="x%s Scale">
+                                    <input type="range" id="image-scale" class="setting" setting="image-scale" min="0.5" max="3" step="0.25" data-format="x%s Scale">
                                     <span id="image-scale-display" class="range-display">Infinite Scale</span>
                                 </div>
                             </div>

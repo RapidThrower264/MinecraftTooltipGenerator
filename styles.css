@@ -349,6 +349,14 @@ input[type="range"]::-moz-range-thumb {
     text-align: center;
 }
 
+.tint-color-selector {
+    display: none;
+}
+
+.tint-color-selector.active {
+    display: block;
+}
+
 /* color change things */
 #color-code-reminder {
     display: grid;
