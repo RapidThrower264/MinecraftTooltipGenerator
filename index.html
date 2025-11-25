@@ -24,8 +24,12 @@
         <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@100..900&display=swap" rel="stylesheet">
         <script src="data/stats.js"></script>
         <script src="data/templates.js"></script>
+        <script src="data/item_information.js"></script>
+        <script src="data/texture_information.js"></script>
+        <script src="data/spritesheet_atlas.js"></script>
         <link rel="stylesheet" type="text/css" href="styles.css">
         <script src="scripts/gif_encoder.js"></script>
+        <script src="scripts/block_rendering_engine.js"></script>
         <script src="scripts.js"></script>
     </head>
     <body>
@@ -68,6 +72,66 @@
                                 <h2>Formatting Codes</h2>
                                 <div id="formatting-codes-reminder"></div>
                             </div>
+                        </div>
+                        <div id="item-display-overlay" class="overlay active">
+                            <h2>Display Item</h2>
+                            <p>Add a Minecraft Item to sit next to your item's description!</p>
+                            <div class="setting-section">
+                                <div class="setting-container">
+                                    <span>Include Display Item?</span>
+                                    <input type="checkbox" id="include-display-item" class="setting" setting="include-display-item" toggle-visibility="display-item-settings">
+                                </div>
+                            </div>
+                            <div id="display-item-settings" class="setting-section toggleable">
+                                <div class="searchable">
+                                    <input class="searchable-input" type="text" search-element="search-bar" placeholder="Search..." id="searched-item-display">
+                                    <div class="relevant-items-content"></div>
+                                </div>
+                                <div class="setting-container">
+                                    <span>Display Option</span>
+                                    <select id="display-item-size" class="setting" setting="display-item-size">
+                                        <option value="ratio">Ratio of Text Height</option>
+                                        <option value="match-width">Match Text Width</option>
+                                        <option value="match-height">Match Text Height</option>
+                                    </select>
+                                </div>
+                                <div class="setting-container setting tint-color-selector" id="item-tint-layer-1" setting="item-tint-layer-1" type="option-color">
+                                    <span>Layer 1</span>
+                                    <select setting="item-tint-layer-1" id="item-tint-layer-1-select" option-with-custom="item-tint-layer-1-color" class="option-color-select">
+                                    </select>
+                                    <input type="color" setting="item-tint-layer-1" id="item-tint-layer-1-color" disabled>
+                                </div>
+                                <div class="setting-container setting tint-color-selector" id="item-tint-layer-2" setting="item-tint-layer-2" type="option-color">
+                                    <span>Layer 2</span>
+                                    <select setting="item-tint-layer-2" id="item-tint-layer-2-select" option-with-custom="item-tint-layer-2-color" class="option-color-select">
+                                    </select>
+                                    <input type="color" setting="item-tint-layer-2" id="item-tint-layer-2-color" disabled>
+                                </div>
+                                <div id="head-generator-settings" class="setting-section toggleable">
+                                    <div class="setting-container">
+                                        <span>Upload Type</span>
+                                        <select id="skin-loading-type">
+                                            <option value="file-skin-setting">From File Upload</option>
+                                            <option value="url-skin-setting">From Texture URL</option>
+                                            <option value="base64-skin-setting">From Base64 Value</option>
+                                        </select>
+                                    </div>
+                                    <div id="file-skin-setting" class="setting-container head-generator-setting toggleable active">
+                                        <span>Skin File</span>
+                                        <input type="file" id="skin-file-input" accept="image/*">
+                                    </div>
+                                    <div id="url-skin-setting" class="setting-container head-generator-setting toggleable">
+                                        <span>Skin URL</span>
+                                        <input id="skin-url-input">
+                                    </div>
+                                    <div id="base64-skin-setting" class="setting-container head-generator-setting toggleable">
+                                        <span>Base64 Value</span>
+                                        <input id="skin-base64-input" placeholder="eyJ0ZXh0dXJlcyI6eyJTS0lOIjp7InVybCI6...">
+                                    </div>
+                                </div>
+                            </div>
+                            <br>
+                            <p class="note">Note: This feature is still in development. There are some special items which are missing. <br><br>If you find any bugs, feel free to message me!</p>
                         </div>
                         <div id="stat-helper" class="overlay">
                             <h2>Stats</h2>
@@ -124,8 +188,8 @@
                         <div id="credits-overlay" class="overlay">
                             <h2>Contributors</h2>
                             <ul>
-                                <li><strong>NotPhoenic</strong>: Added support for custom Hex Colors</li>
-                                <li><strong>R4PlD</strong>: Initial Tooltip Generator</li>
+                                <li><strong>Phoenic</strong>: Added support for custom Hex Colors</li>
+                                <li><strong>R4PlD</strong>: Initial Tooltip Generator, Item and Block Rendering support</li>
                             </ul>
                             <h2>Special Thanks</h2>
                             <p>There are many people to thank really. Many people that I could name, but I don't really know if they want it to be publicly announced here.</p>
@@ -149,6 +213,7 @@
                                     <a class="icon overlay-btn" data-overlay="color-code-helper"><img src="images/color-palette.png" alt="Pixel Art Paint brush and paint palette" style="--shadow-color: #c19e81;"></a>
                                     <a class="icon overlay-btn" data-overlay="stat-helper"><img src="images/stats.png" alt="Minecraft Glyph of Sea Creature Chance" style="--shadow-color: #002a2a;"></a>
                                     <a class="icon overlay-btn" data-overlay="template-helper"><img src="images/templates.png" alt="Pixel Art of pencil and ruler" style="--shadow-color: #ac780a;"></a>
+                                    <a class="icon overlay-btn" data-overlay="item-display-overlay"><img src="images/grass_block.png" alt="Minecraft Dirt Block" style="--shadow-color: #4edf15;"></a>
                                     <a class="icon overlay-btn" data-overlay="settings-overlay"><img src="images/settings.png" alt="Pixel Art of a Gear" style="--shadow-color: #696c76;"></a>
                                     <a class="icon overlay-btn" data-overlay="credits-overlay"><img src="images/credits.png" alt="Minecraft Glyph of a Heart" style="--shadow-color: #cc3333;"></a>
                                 </div>
@@ -158,5 +223,9 @@
                 </div>
             </div>
         </main>
+        <div id="spritesheets" style="display: none;">
+            <img src="images/spritesheet.png" id="target-image" alt="Spritesheet for block renderer">
+            <img src="images/default_skin.png" id="skin-image" alt="Player Sking for block renderer">
+        </div>
     </body>
 </html>

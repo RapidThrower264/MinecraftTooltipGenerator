@@ -14,7 +14,7 @@
     margin: 0;
     line-height: 1.25;
     letter-spacing: 0.01em;
-    font-family: "Roboto";
+    font-family: "Roboto", Arial, Helvetica;
 }
 
 h2 { 
@@ -109,10 +109,15 @@ main {
     padding-bottom: 2em;
 }
 
-canvas {
+#canvas-wrapper canvas {
     transform-origin: top left;
     transform: scale(2);
     outline: none;
+    display: none;
+}
+
+#canvas-wrapper canvas.active {
+    display: block;
 }
 
 #js-disabled-text {
@@ -124,6 +129,10 @@ canvas {
     border-radius: 1em;
     border: 0.25em solid #ccc;
     padding: 1em;
+}
+
+#spritesheets {
+    display: none;
 }
 
 /* overlays */
@@ -249,6 +258,57 @@ canvas {
     filter: drop-shadow(0 0 0.75rem var(--shadow-color));
 }
 
+/* item-display-overlay */
+.searchable {
+    width: 100%;
+    font-size: 1.1em;
+}
+
+.searchable-input {
+    width: 100%;
+    font-size: 1.25em;
+}
+
+.relevant-items-content {
+    width: 100%;
+    background-color: #ddd;
+    display: none;
+    flex-direction: column;
+    margin-top: 0.25em;
+    overflow-y: auto;
+    max-height: 300px;
+    position: relative;
+    gap: 0.25em;
+}
+
+.searchable:focus-within .relevant-items-content {
+    display: flex;
+}
+
+.searchable-item {
+    padding-block: 1em;
+    padding-left: 0.8em;
+    --btn-color: white;
+    
+    color: var(--color);
+    background-color: var(--btn-color);
+    
+    border: none;
+    border-radius: 0.5em;
+    cursor: pointer;
+    box-shadow: 0px 0px 3px #777;
+    font-size: 1em;
+}
+
+.searchable-item.hidden {
+    display: none;
+}
+
+.searchable-item:hover, .searchable-item.selected {
+    background-color: var(--primary-600);
+    color: white;
+}
+
 /* setting overlay */
 .setting-section {
     display: flex;
@@ -267,6 +327,14 @@ canvas {
 .setting-container.vertical {
     flex-direction: column;
     gap: 0.5em;
+}
+
+.toggleable {
+    display: none;
+}
+
+.toggleable.active {
+    display: flex;
 }
 
 input[type="range"] {
@@ -434,4 +502,10 @@ input[type="range"]::-moz-range-thumb {
         width: calc(100% - 8.5em);
         margin: 1em;
     }
+}
+
+.note {
+    font-style: italic;
+    color: #777;
+    font-size: 0.9em;
 }

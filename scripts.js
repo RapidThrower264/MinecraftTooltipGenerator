@@ -1,19 +1,43 @@
+let image_spacing = 15;
+let min_image_size = 100;
+
+function createCanvas(canvasId) {
+    let canvas = document.createElement("canvas");
+    if (canvasId != null)
+        canvas.setAttribute("id", canvasId);
+    
+    let ctx = canvas.getContext("2d", {"willReadFrequently": true});
+    ctx.imageSmoothingEnabled = false;
+    return {canvas: canvas, ctx: ctx};
+}
+
 class MinecraftGenerator {
     // wrapper class for the generator
-    constructor(htmlCanvas, canvasWrapper, textarea, settings) {
+    constructor(canvasWrapper, textarea, settings) {
+        this.canvasWrapper = canvasWrapper;
         this.textarea = textarea;
-        this.htmlCanvas = htmlCanvas;
         this.settings = settings;
 
-        this.textManager = new TextManager(settings);
-        this.canvas = new MinecraftCanvas(this.textManager, htmlCanvas, canvasWrapper, textarea, this.settings);
+        this.textRenderer = new TextGenerator(this.settings);
+        this.textRenderer.setText(textarea.value);
+        this.blockRenderer = new BlockRenderingEngine(200, 200, document.getElementById("skin-image"));
+        this.canvasWrapper.appendChild(this.textRenderer.canvas);
+
+        this.textCanvas = this.textRenderer.canvas;
+        let combinedCanvas = createCanvas("combined-canvas");
+        this.combinedCanvas = combinedCanvas.canvas;
+        this.combinedctx = combinedCanvas.ctx;
+        this.canvasWrapper.appendChild(this.combinedCanvas);
+        this.combinedctx.imageSmoothingEnabled = false;
+
+        this.hasBlockRendered = false;
+        (this.hasBlockRendered ? this.combinedCanvas : this.textCanvas).classList.add("active");
 
         // creating listener for text area
         this.textarea.addEventListener("input", (event) => {
-            this.isValid = false;
-            if (this.settings.updatePeriod == 0) {
+            this.textRenderer.setText(event.target.value);
+            if (this.settings.updatePeriod == 0)
                 this.redrawImage();
-            }            
         });
 
         // generator refresh settings.
@@ -25,12 +49,15 @@ class MinecraftGenerator {
         this.settings.getCallback("first-line-gap").addListener((value) => this.forceRerender());
         this.settings.getCallback("render-background").addListener((value) => this.forceRerender());
         this.settings.getCallback("font-version").addListener(value => this.forceRerender());
-        this.settings.getCallback("image-scale").addListener((value) => {
-            this.canvas.changeWrapperSize();
+        this.settings.getCallback("image-scale").addListener((value) => this.changeWrapperSize());
+        this.settings.getCallback("update-period").addListener((value) => this.updatePeriodChange(value));
+        this.settings.getCallback("include-display-item").addListener((value) => {
+            this.hasBlockRendered = value;
+            this.forceRerender();
         });
-        this.settings.getCallback("update-period").addListener((value) => {
-            this.updatePeriodChange(value);
-        });
+        this.settings.getCallback("display-item-size").addListener((value) => this.forceRerender());
+        this.settings.getCallback("item-tint-layer-1").addListener((value) => this.blockRenderer.setTintLayer(value, 0));
+        this.settings.getCallback("item-tint-layer-2").addListener((value) => this.blockRenderer.setTintLayer(value, 1));
     }
 
     forceRerender(_) {
@@ -42,33 +69,50 @@ class MinecraftGenerator {
     }
 
     async redrawImage() {
-        // redraws the screen if it needs to
-        if (this.isValid)
+        let isValid = this.textRenderer.isValid && this.blockRenderer.isValid && this.isValid;
+        if (isValid)
             return;
 
-        await this.textManager.splitText(this.textarea.value);
-        
-        let height = this.canvas.convertLineToYCoord(this.textManager.lines.length - 1) + FONT_SIZE + TOP_OFFSET;
-        this.canvas.changeCanvasSize(LEFT_OFFSET * 2, height, false);
-        // iterate over all the lines, drawing each section based on it's color
-        this.textManager.lines.forEach((line, index) => {
-            let y = this.canvas.convertLineToYCoord(index);
-            let segments = line.segments;
-            
-            for (let i = 0; i < line.length; i++) {
-                let segment = segments[i];
-                if (!segment.isValid) {
-                    segment.y = y;
-                    const width = this.canvas.renderText(segment.text, segment.x, segment.y, segment);
-                    if (i + 1 < segments.length && segment.x + width != segments[i + 1].x) {
-                        segments[i + 1].x = segment.x + width;
-                        segments[i + 1].isValid = false;
-                    }
-                }
-            }
-        });
+        // redraws the screen if it needs to
+        await this.textRenderer.render();
+        this.blockRenderer.render();
 
+        let activeCanvas, inactiveCanvas;
+        if (this.hasBlockRendered) {
+            this.redrawCombinedCanvas();
+            activeCanvas = this.combinedCanvas;
+            inactiveCanvas = this.textCanvas;
+        } else {
+            activeCanvas = this.textCanvas;
+            inactiveCanvas = this.combinedCanvas;
+        }
+        
+        this.changeWrapperSize();
+
+        inactiveCanvas.classList.remove("active");
+        activeCanvas.classList.add("active");
         this.isValid = true;
+    }
+
+    redrawCombinedCanvas() {
+        let width, height, itemSideLength;
+
+        // calculate the canvas size
+        if (this.settings.displayItemSize == "ratio")
+            itemSideLength = Math.max(min_image_size, 2/3 * this.textRenderer.height) | 0;
+        else if (this.settings.displayItemSize == "match-height")
+            itemSideLength = this.textRenderer.height;
+        else
+            itemSideLength = this.textRenderer.width;
+
+        width = image_spacing * 3 + this.textRenderer.width + itemSideLength;
+        height = image_spacing * 2 + Math.max(this.textRenderer.height, itemSideLength);
+        
+        this.combinedCanvas.width = width;
+        this.combinedCanvas.height = height;
+        this.combinedctx.imageSmoothingEnabled = false;
+        this.combinedctx.drawImage(this.textRenderer.canvas, image_spacing * 2 + itemSideLength, (height / 2 - this.textRenderer.height / 2) | 0);
+        this.combinedctx.drawImage(this.blockRenderer.canvas, 0, 0, this.blockRenderer.width, this.blockRenderer.height, image_spacing, (height / 2 - itemSideLength / 2) | 0, itemSideLength, itemSideLength);
     }
 
     updatePeriodChange(value) {
@@ -97,7 +141,7 @@ class MinecraftGenerator {
 
     async copyToClipboard() {
         try {
-            const blob = await this.canvas.getImageFromCanvas();
+            const blob = await this.textRenderer.getImageFromCanvas();
             const data = [new ClipboardItem({[blob.type]: blob})];
             await navigator.clipboard.write(data);
         } catch (error) {
@@ -108,13 +152,13 @@ class MinecraftGenerator {
     async downloadImage(imageName) {
         let blob;
         let fileFormat;
-        if (this.textManager.hasObfuscatedText()) {
+        if (this.textRenderer.textContent.hasObfuscatedText()) {
             const encoder = new GifEncoder();
-            encoder.createImage(this.canvas, 6);
+            encoder.createImage(this.textRenderer, 6);
             fileFormat = "gif";
             blob = new Blob([encoder.stream], { type: 'image/gif' });
         } else {
-            blob = await this.canvas.getImageFromCanvas();
+            blob = await this.textRenderer.getImageFromCanvas();
             fileFormat = "png";
         }
 
@@ -136,46 +180,36 @@ class MinecraftGenerator {
     }
 }
 
-class MinecraftCanvas {
-    constructor(textContent, canvas, canvasWrapper, textarea, settings) {
-        this.textContent = textContent;
-        this.canvasWrapper = canvasWrapper;
-        this.canvas = canvas;
-        this.ctx = canvas.getContext("2d", { "willReadFrequently": true });
+class TextGenerator {
+    constructor(settings) {
+        this.textContent = new TextManager(settings);
+        let mainCanvas = createCanvas(null);
+        this.canvas = mainCanvas.canvas;
+        this.ctx = mainCanvas.ctx;
 
         this.settings = settings;
-        this.textarea = textarea;
+        this.text = "";
 
-        this.textCanvas = document.createElement("canvas");
+        let textCanvas = createCanvas(null);
+        this.textCanvas = textCanvas.canvas;
         this.textCanvas.width = 1000;
         this.textCanvas.height = 100;
-        this.tctx = this.textCanvas.getContext("2d", {"willReadFrequently": true});
+        this.tctx = textCanvas.ctx;
         this.tctx.fillStyle = "white";
 
-        this.obfuscatedCanvas = document.createElement("canvas");
+        let obfuscatedCanvas = createCanvas(null);
+        this.obfuscatedCanvas = obfuscatedCanvas.canvas;
         this.obfuscatedCanvas.width = 1000;
         this.obfuscatedCanvas.height = 100;
-        this.octx = this.obfuscatedCanvas.getContext("2d", {"willReadFrequently": true});
+        this.octx = obfuscatedCanvas.ctx;
         this.octx.fillStyle = "white";
 
-        this.setAntiAliasing(this.ctx);
-        this.setAntiAliasing(this.tctx);
-        this.setAntiAliasing(this.octx);
-
-        this.changeWrapperSize();
         this.changeCanvasSize((LEFT_OFFSET) * 2, (TOP_OFFSET) * 2 + FONT_SIZE, false);
 
         this.colors = null;
         this.obfuscatedSegments = null;
-    }
 
-    setAntiAliasing(context) {
-        // disables anti aliasing for the context
-        context.mozImageSmoothingEnabled = false;
-        context.oImageSmoothingEnabled = false;
-        context.webkitImageSmoothingEnabled = false;
-        context.msImageSmoothingEnabled = false;
-        context.imageSmoothingEnabled = false;
+        this.isValid = true;
     }
 
     convertLineToYCoord(yValue) {
@@ -416,6 +450,40 @@ class MinecraftCanvas {
 
             yield [this.octx.getImageData(left, top, right - left, bottom - top), left, top];
         }
+    }
+
+    setText(text) {
+        this.text = text;
+        this.isValid = false;
+    }
+
+    async render() {
+        if (this.isValid)
+            return;
+    
+        await this.textContent.splitText(this.text);
+        
+        let height = this.convertLineToYCoord(this.textContent.lines.length - 1) + FONT_SIZE + TOP_OFFSET;
+        this.changeCanvasSize(LEFT_OFFSET * 2, height, false);
+        // iterate over all the lines, drawing each section based on it's color
+        this.textContent.lines.forEach((line, index) => {
+            let y = this.convertLineToYCoord(index);
+            let segments = line.segments;
+            
+            for (let i = 0; i < line.length; i++) {
+                let segment = segments[i];
+                if (!segment.isValid) {
+                    segment.y = y;
+                    const width = this.renderText(segment.text, segment.x, segment.y, segment);
+                    if (i + 1 < segments.length && segment.x + width != segments[i + 1].x) {
+                        segments[i + 1].x = segment.x + width;
+                        segments[i + 1].isValid = false;
+                    }
+                }
+            }
+        });
+
+        this.isValid = true;
     }
 }
 
@@ -704,6 +772,11 @@ class Callback {
 
 class Settings {
     constructor() {
+        // item display settings
+        this._includeDisplayItem = new Callback(false);
+        this._displayItemSize = new Callback("ratio");
+        this._itemTintLayer1 = new Callback("#000000");
+        this._itemTintLayer2 = new Callback("#ffffff");
         // image settings
         this._firstLineGap = new Callback(true);
         this._renderBackground = new Callback(true);
@@ -718,6 +791,10 @@ class Settings {
             "font-version": this._fontVersion,
             "update-period": this._updatePeriod,
             "image-scale": this._imageScale,
+            "include-display-item": this._includeDisplayItem,
+            "display-item-size": this._displayItemSize,
+            "item-tint-layer-1": this._itemTintLayer1,
+            "item-tint-layer-2": this._itemTintLayer2
         }
     }
 
@@ -739,6 +816,22 @@ class Settings {
 
     get imageScale() {
         return this._imageScale.value;
+    }
+
+    get includeDisplayItem() {
+        return this._includeDisplayItem.value;
+    }
+
+    get displayItemSize() {
+        return this._displayItemSize.value;
+    }
+
+    get itemTintLayer1() {
+        return this._itemTintLayer1.value;
+    }
+
+    get itemTintLayer2() {
+        return this._itemTintLayer2.value;
     }
 
     getSetting(setting) {
@@ -809,6 +902,20 @@ class GlyphSprite {
         });
     }
 }
+
+const POTION_OPTIONS = {"Default": 3694022, "Speed": 3402751, "Slowness": 9154528, "Haste": 14270531, "Mining Fatigue": 4866583, "Strength": 16762624, "Instant Health": 16262179, 
+            "Instant Damage": 11101546, "Jump Boost": 16646020, "Nausea": 5578058, "Regeneration": 13458603, "Resistance": 9520880, "Fire Resistance": 16750848, 
+            "Water Breathing": 10017472, "Invisibility": 16185078, "Blindness": 2039587, "Night Vision": 12779366, "Hunger": 5797459, "Weakness": 4738376, 
+            "Poison": 8889187, "Wither": 7561558, "Health Boost": 16284963, "Absorption": 2445989, "Saturation": 16262179, "Glowing": 9740385, "Levitation": 13565951, 
+            "Fatal Poison": 5149489, "Luck": 5882118, "Bad Luck": 12624973, "Slow Falling": 15978425, "Conduit Power": 1950417, "Dolphin's Grace": 8954814, "Bad Omen": 745784, 
+            "Hero of the Village": 4521796, "Darkness": 2696993, "T rial Omen": 1484454, "Raid Omen": 14565464, "Infested": 9214860, "Oozing": 10092451, "Weaving": 7891290, 
+            "Wind Charged": 12438015, "Slowness Resistance": 9274086};
+const DYE_OPTIONS = {"White": 16383998, "Orange": 16351261, "Magenta": 13061821, "Light Blue": 3847130, "Yellow": 16701501, "Lime": 8439583, "Pink": 15961002, "Gray": 4673362, 
+            "Light Gray": 10329495, "Cyan": 1481884, "Purple": 8991416, "Blue": 3949738, "Brown": 8606770, "Green": 6192150, "Red": 11546150, "Black": 1908001};
+const FIREWORK_OPTIONS = {"White": 15790320, "Orange": 15435844, "Magenta": 12801229, "Light Blue": 6719955, "Yellow": 14602026, "Lime": 4312372, "Pink": 14188952, 
+    "Gray": 4408131, "Light Gray": 11250603, "Cyan": 2651799, "Purple": 8073150, "Blue": 2437522, "Brown": 5320730, "Green": 3887386, "Red": 11743532, "Black": 1973019
+};
+const ITEM_TINT_OPTIONS = {"potion": POTION_OPTIONS, "dye": DYE_OPTIONS, "firework": FIREWORK_OPTIONS};
 
 const BLACK = new MCColor("0", "BLACK", "#000000", "#000000");
 const DARK_BLUE = new MCColor("1", "DARK_BLUE", "#0000aa", "#00002a");
@@ -1021,7 +1128,6 @@ async function loadFonts() {
                 GLYPHS[fontIndex] = glyphSet;
             }
         })
-        
 }
 
 window.addEventListener("load", async (event) => {
@@ -1053,7 +1159,7 @@ window.addEventListener("load", async (event) => {
                 result = event.target.value;
 
             if (result !== undefined)
-            settings.changeSetting(event.target.getAttribute("setting"), result);
+                settings.changeSetting(event.target.getAttribute("setting"), result);
         });
 
         if (input.type == "range") {
@@ -1131,8 +1237,196 @@ window.addEventListener("load", async (event) => {
         });
     });
 
-    var c = document.getElementById("canvas");
-    canvas = new MinecraftGenerator(c, canvasWrapper, textarea, settings);
+    let itemTintOptionList = document.createDocumentFragment();
+    let standardOptions = [["Custom", "custom", ""], ["Default", -1, "initial"]];
+    for (const standardOption of standardOptions) {
+        let option = document.createElement("option");
+        option.innerHTML = standardOption[0];
+        option.value = standardOption[1];
+        if (standardOption[2] != "") option.classList.add(standardOption[2]);
+        itemTintOptionList.appendChild(option);
+    }
+
+    for (const option of Object.keys(ITEM_TINT_OPTIONS)) {
+        let allOptions = ITEM_TINT_OPTIONS[option];
+        let category = document.createElement("div");
+        category.setAttribute("category", option);
+        
+        let optionNames = Object.keys(allOptions);
+        for (const name of optionNames) {
+            let element = document.createElement("option");
+            element.innerHTML = name;
+            element.value = allOptions[name];
+            category.appendChild(element);
+        }
+
+        itemTintOptionList.appendChild(category);
+    }
+    
+    document.querySelectorAll(".option-color-select").forEach(element => {
+        element.appendChild(itemTintOptionList.cloneNode(true)); 
+    });
+    document.querySelectorAll(".searchable").forEach(element => {
+        let dropdownArea = element.querySelector(".relevant-items-content");
+        let searchBar = element.querySelector(".searchable-input");
+        
+        let onArrowDirection = (direction) => {
+            if (selectedIndex != -1) {
+                recyclerElements[selectedIndex].classList.remove("selected");
+            }
+
+            selectedIndex += direction;
+            selectedIndex = Math.max(Math.min(selectedIndex, activeElements), 1);
+            recyclerElements[selectedIndex].classList.add("selected");
+            recyclerElements[selectedIndex].scrollIntoView({block: "nearest"});
+        }
+
+        let tintColorSelectors = document.querySelectorAll(".tint-color-selector");
+        let onSelect = (targetItem) => {
+            let targetItemModel = targetItem.replaceAll(" ", "_").toLowerCase();
+            if (!modelInformation[targetItemModel]) {
+                throw new Error("Couldn't find the requested item");
+            }
+
+            searchBar.value = targetItem;
+            document.activeElement.blur();
+            canvas.blockRenderer.setItem(targetItemModel);
+
+            let headRenderingSettings = document.getElementById("head-generator-settings");
+            let index = 0;
+            if (targetItemModel == "player_head") {
+                headRenderingSettings.classList.add("active");
+            } else {
+                headRenderingSettings.classList.remove("active");
+
+                let foundTints = modelInformation[targetItemModel]?.tints ?? [];
+                let tints = [];
+                Object.values(foundTints).forEach((element) => {
+                    tints.push(element?.value ?? element?.default ?? 8174955);
+                    tintColorSelectors[index].classList.add("active");
+                    
+                    let requiredType = element.type.replaceAll("minecraft:", "");
+                    let categories = tintColorSelectors[index].querySelectorAll("div");
+                    for (let i = 0; i < categories.length; i++) {
+                        categories[i].style.display = categories[i].getAttribute("category") == requiredType ? "block" : "none";
+                    }
+                    tintColorSelectors[index].querySelector(".initial").value = tints[index];
+                    tintColorSelectors[index].querySelector("select").value = tints[index];
+                    tintColorSelectors[index].querySelector("input[type='color']").value = "#" + new Uint8Array([(tints[index] >> 16) & 0xff, (tints[index] >> 8) & 0xff, tints[index] & 0xff]).toHex();
+                    index++;
+                });
+                canvas.blockRenderer.setTint(tints);
+            }
+            
+            for (; index < tintColorSelectors.length; index++) {
+                tintColorSelectors[index].classList.remove("active");
+            }
+        }
+
+        let elementCount = 10;
+        let selectedIndex = -1;
+        let activeElements = 0;
+        let recyclerElements = [];
+        for (let i = 0; i <= elementCount; i++) {
+            let listElement = document.createElement("button");
+            listElement.classList.add("searchable-item", "hidden");
+            if (i > 0) {
+                listElement.addEventListener("click", (event) => {
+                    if (event.target.getAttribute("target-item"))
+                        onSelect(event.target.getAttribute("target-item"));
+                });
+            }
+            dropdownArea.appendChild(listElement);
+            recyclerElements.push(listElement);
+        }
+
+        recyclerElements[0].innerHTML = "No matches...";
+        recyclerElements[0].classList.remove("hidden");
+
+        searchBar.addEventListener("keydown", (event) => {
+            if (event.code == "ArrowDown") {
+                event.preventDefault();
+                onArrowDirection(1)
+            }
+            else if (event.code == "ArrowUp") {
+                event.preventDefault();
+                onArrowDirection(-1);
+            }
+            else if (event.code == "Enter") {
+                if (activeElements == 1)
+                    selectedIndex = 1;
+                else if (selectedIndex < 0)
+                    return;
+                
+                let targettedElement = recyclerElements[selectedIndex].getAttribute("target-item");
+                if (targettedElement) {
+                    recyclerElements[selectedIndex].click();
+                }
+            }
+        });
+        searchBar.addEventListener("input", (event) => {
+            let word = event.target.value.toLowerCase();
+            if (!itemInformation[word.charAt(0)]) {
+                recyclerElements[0].classList.remove("hidden");
+                for (let i = 1; i <= elementCount; i++) {
+                    recyclerElements[i].classList.add("hidden");
+                }
+                return;
+            }
+
+            recyclerElements[0].classList.add("hidden");
+            let items = itemInformation[word.charAt(0)];
+            let wordIndex = 0;
+            let elementIndex = 1;
+            let regex = new RegExp(`(${word.toLowerCase()})`, "i");
+            selectedIndex = 0;
+            activeElements = 0;
+            while (elementIndex < elementCount && wordIndex < items.length) {
+                if (regex.test(items[wordIndex])) {
+                    recyclerElements[elementIndex].innerHTML = items[wordIndex];
+                    recyclerElements[elementIndex].setAttribute("target-item", items[wordIndex])
+                    recyclerElements[elementIndex].classList.remove("hidden", "selected");
+                    elementIndex++;
+                    activeElements++;
+                }
+                wordIndex++;
+            }
+
+            if (elementIndex == 1) {
+                selectedIndex = -1;
+                recyclerElements[0].classList.remove("hidden");
+            }
+            for (; elementIndex < elementCount; elementIndex++) {
+                recyclerElements[elementIndex].classList.add("hidden");
+            }
+        });
+    });
+
+    document.getElementById("skin-loading-type").addEventListener("change", (event) => {
+        let elements = document.getElementsByClassName("head-generator-setting");
+        for (let i = 0; i < elements.length; i++) {
+            elements[i].classList.remove("active");
+        }
+        document.getElementById(event.target.value).classList.add("active");
+    });
+
+    canvas = new MinecraftGenerator(canvasWrapper, textarea, settings);
+    document.getElementById("display-item-settings").appendChild(canvas.blockRenderer.canvas);
+    document.getElementById("file-skin-setting").addEventListener("change", (event) => {
+        if (event.target.files.length < 1) {
+            console.error("Please select a file!");
+            return;
+        }
+
+        canvas.blockRenderer.setSkinTexture(URL.createObjectURL(event.target.files[0]));
+    });
+    document.getElementById("skin-url-input").addEventListener("change", (event) => {
+        canvas.blockRenderer.setSkinTexture(event.target.value);
+    });
+    document.getElementById("skin-base64-input").addEventListener("change", (event) => {
+        canvas.blockRenderer.setBase64SkinTexture(event.target.value);
+    });
+    
     await canvas.redrawImage();
 });
 
