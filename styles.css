@@ -120,6 +120,11 @@ main {
     display: block;
 }
 
+#display-item-settings canvas {
+    border: 3px solid #ddd; 
+    box-shadow: 0px 5px 10px 5px #bbb;
+}
+
 #js-disabled-text {
     max-width: 50em;
     width: 90%;

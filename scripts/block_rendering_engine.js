@@ -215,7 +215,6 @@ class BlockRenderingEngine {
 
         this.modelName = null;
         this.tint = [];
-        this.cachedUUIDs = {};
     }
 
     setSize(width, height) {
@@ -223,7 +222,7 @@ class BlockRenderingEngine {
         this.height = height;
         this.canvas.width = width;
         this.canvas.height = height;
-        this.canvas.style.imageRendering = width == 16 ? "pixelated" : "smooth";
+        this.canvas.style.imageRendering = width == 16 ? "pixelated" : "auto";
     }
 
     setAntiAliasing(context) {
