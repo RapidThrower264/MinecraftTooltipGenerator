@@ -139,9 +139,21 @@ class MinecraftGenerator {
         activeCanvas.style.transform = `scale(${this.settings.imageScale})`;
     }
 
+    async getImageFromCanvas(canvas) {
+        return new Promise((resolve, reject) => {
+            canvas.toBlob((blob) => {
+                if (blob) {
+                    resolve(blob);
+                } else {
+                    reject(new Error("Couldn't convert the canvas to a blob"));
+                }
+            })
+        })
+    }
+
     async copyToClipboard() {
         try {
-            const blob = await this.textRenderer.getImageFromCanvas();
+            const blob = await this.getImageFromCanvas(this.hasBlockRendered ? this.combinedCanvas : this.textRenderer.canvas);
             const data = [new ClipboardItem({[blob.type]: blob})];
             await navigator.clipboard.write(data);
         } catch (error) {
@@ -152,13 +164,13 @@ class MinecraftGenerator {
     async downloadImage(imageName) {
         let blob;
         let fileFormat;
-        if (this.textRenderer.textContent.hasObfuscatedText()) {
+        if (this.textRenderer.textContent.hasObfuscatedText() && !this.hasBlockRendered) {
             const encoder = new GifEncoder();
             encoder.createImage(this.textRenderer, 6);
             fileFormat = "gif";
             blob = new Blob([encoder.stream], { type: 'image/gif' });
         } else {
-            blob = await this.textRenderer.getImageFromCanvas();
+            blob = await this.getImageFromCanvas(this.hasBlockRendered ? this.combinedCanvas : this.textRenderer.canvas);
             fileFormat = "png";
         }
 
@@ -386,18 +398,6 @@ class TextGenerator {
         if (saveData) {
             this.ctx.putImageData(savedData, LEFT_OFFSET, TOP_OFFSET);
         }
-    }
-
-    async getImageFromCanvas() {
-        return new Promise((resolve, reject) => {
-            this.canvas.toBlob((blob) => {
-                if (blob) {
-                    resolve(blob);
-                } else {
-                    reject(new Error("Couldn't convert the canvas to a blob"));
-                }
-            })
-        })
     }
 
     get canvasWidth() {
