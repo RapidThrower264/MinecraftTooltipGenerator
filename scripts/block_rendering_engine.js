@@ -156,7 +156,7 @@ class TextureManager {
         while (targetModel != null) {
             let tempModel = structuredClone(modelInformation[targetModel]);
             model = this.deepMergeReverse(model, tempModel);
-            targetModel = tempModel.parent;
+            targetModel = tempModel.parent != targetModel ? tempModel.parent : null;
         }
     
         return model;
@@ -407,7 +407,7 @@ class BlockRenderingEngine {
         this.zBuffer = new Float64Array(this.width * this.height).fill(-653000);
         let imageData = this.ctx.getImageData(0, 0, this.width, this.height);
         this.data = imageData.data;
-        
+
         let scale = model?.display?.gui?.scale?.[0] ?? 0.625;
         let rotation = model?.display?.gui?.rotation?.map(value => value * Math.PI / 180) ?? [Math.PI / 6, 5 * Math.PI / 4, 0];
         let translation = model?.display?.gui?.translation.map(value => value != 0 ? Math.sign(value) * (Math.abs(value) + 1) / 16 : 0) ?? [0, 0, 0];
