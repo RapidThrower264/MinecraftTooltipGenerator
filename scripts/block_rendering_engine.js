@@ -110,10 +110,9 @@ class Texture {
 class TextureManager {
     // Manages the textures and models for the renderer
     constructor(spritesheet, skinImage) {
-        this.width = 512;
-        this.height = 512;
-
         this.targetImage = document.getElementById(spritesheet);
+        this.width = this.targetImage.width;
+        this.height = this.targetImage.height;
         this.textureCanvas = document.createElement("canvas");
         this.textureCanvas.width = this.width;
         this.textureCanvas.height = this.height;
