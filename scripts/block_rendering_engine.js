@@ -183,12 +183,12 @@ class TextureManager {
 class BlockRenderingEngine {
     // the main renderer for blocks and items
     static cubeFaces = [
-        [2, 1, 3, 0, "north"],
-        [5, 6, 4, 7, "south"],
-        [1, 5, 0, 4, "west"],
-        [6, 2, 7, 3, "east"],
-        [1, 2, 5, 6, "up"],
-        [4, 7, 0, 3, "down"]
+        [2, 1, 3, 0, "north", 0, 1],
+        [5, 6, 4, 7, "south", 0, 1],
+        [1, 5, 0, 4, "west", 2, 1],
+        [6, 2, 7, 3, "east", 2, 1],
+        [1, 2, 5, 6, "up", 0, 2],
+        [4, 7, 0, 3, "down", 0, 2]
     ]
 
     constructor(width, height, skinImage) {
@@ -436,6 +436,9 @@ class BlockRenderingEngine {
                     while (targetTexture.includes("#"))
                         targetTexture = model.textures[targetTexture.replaceAll("#", "")];
                     let texture = this.textureManager.getTexture(targetTexture, modelFace?.tintindex > -1 ? tints[modelFace.tintindex] : undefined);
+                    
+                    if (!modelFace.uv)
+                        modelFace.uv = [modelData.from[face[5]], modelData.from[face[6]], modelData.to[face[5]], modelData.to[face[6]]];
                     upperTriangle.setUVCoordinates([0, 0, 1, 0, 0, 1], modelFace.uv);
                     this.drawTriangle(upperTriangle, texture, shadowMultiplier);
                     lowerTriangle.setUVCoordinates([1, 0, 0, 1, 1, 1], modelFace.uv);
