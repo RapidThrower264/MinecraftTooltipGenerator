@@ -1305,10 +1305,9 @@ window.addEventListener("load", async (event) => {
                     tints.push(element?.value ?? element?.default ?? 8174955);
                     tintColorSelectors[index].classList.add("active");
                     
-                    let requiredType = element.type.replaceAll("minecraft:", "");
                     let categories = tintColorSelectors[index].querySelectorAll("div");
                     for (let i = 0; i < categories.length; i++) {
-                        categories[i].style.display = categories[i].getAttribute("category") == requiredType ? "block" : "none";
+                        categories[i].style.display = categories[i].getAttribute("category") == element.type ? "block" : "none";
                     }
                     tintColorSelectors[index].querySelector(".initial").value = tints[index];
                     tintColorSelectors[index].querySelector("select").value = tints[index];
