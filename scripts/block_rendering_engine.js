@@ -432,11 +432,10 @@ class BlockRenderingEngine {
                 if ((normal[2] < 0 && modelData.faces[face[4]]) || modelData["force_render"]) {
                     let shadowMultiplier = normal[1] < 0 ? 1 : (normal[0] > 0 ? 0.65 : 0.4);
                     let modelFace = modelData.faces[face[4]];
-                    let targetFace = modelFace.texture.replaceAll("#", "");
-                    while (model.textures[targetFace]) {
-                        targetFace = model.textures[targetFace].replaceAll("#", "");
-                    }
-                    let texture = this.textureManager.getTexture(targetFace, modelFace?.tintindex > -1 ? tints[modelFace.tintindex] : undefined);
+                    let targetTexture = modelFace.texture;
+                    while (targetTexture.includes("#"))
+                        targetTexture = model.textures[targetTexture.replaceAll("#", "")];
+                    let texture = this.textureManager.getTexture(targetTexture, modelFace?.tintindex > -1 ? tints[modelFace.tintindex] : undefined);
                     upperTriangle.setUVCoordinates([0, 0, 1, 0, 0, 1], modelFace.uv);
                     this.drawTriangle(upperTriangle, texture, shadowMultiplier);
                     lowerTriangle.setUVCoordinates([1, 0, 0, 1, 1, 1], modelFace.uv);
