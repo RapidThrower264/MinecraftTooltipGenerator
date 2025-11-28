@@ -1409,6 +1409,12 @@ window.addEventListener("load", async (event) => {
         document.getElementById(event.target.value).classList.add("active");
     });
 
+    document.querySelectorAll(".click-toggleable").forEach(element => {
+        element.addEventListener("click", () => {
+            document.getElementById(element.getAttribute("target")).classList.toggle("active");
+        });
+    });
+
     canvas = new MinecraftGenerator(canvasWrapper, textarea, settings);
     document.getElementById("display-item-settings").appendChild(canvas.blockRenderer.canvas);
     document.getElementById("file-skin-setting").addEventListener("change", (event) => {
