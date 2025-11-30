@@ -99,20 +99,21 @@ class MinecraftGenerator {
 
         // calculate the canvas size
         if (this.settings.displayItemSize == "ratio")
-            itemSideLength = Math.max(min_image_size, 2/3 * this.textRenderer.height) | 0;
+            itemSideLength = Math.max(min_image_size, 0.5 * this.textRenderer.height) | 0;
         else if (this.settings.displayItemSize == "match-height")
             itemSideLength = this.textRenderer.height;
         else
             itemSideLength = this.textRenderer.width;
 
-        width = image_spacing * 3 + this.textRenderer.width + itemSideLength;
-        height = image_spacing * 2 + Math.max(this.textRenderer.height, itemSideLength);
+        let renderedImageSpacing = Math.max((itemSideLength / 8) | 0, image_spacing);
+        width = renderedImageSpacing * 3 + this.textRenderer.width + itemSideLength;
+        height = renderedImageSpacing * 2 + Math.max(this.textRenderer.height, itemSideLength);
         
         this.combinedCanvas.width = width;
         this.combinedCanvas.height = height;
         this.combinedctx.imageSmoothingEnabled = false;
-        this.combinedctx.drawImage(this.textRenderer.canvas, image_spacing * 2 + itemSideLength, (height / 2 - this.textRenderer.height / 2) | 0);
-        this.combinedctx.drawImage(this.blockRenderer.canvas, 0, 0, this.blockRenderer.width, this.blockRenderer.height, image_spacing, (height / 2 - itemSideLength / 2) | 0, itemSideLength, itemSideLength);
+        this.combinedctx.drawImage(this.textRenderer.canvas, renderedImageSpacing * 2 + itemSideLength, (height / 2 - this.textRenderer.height / 2) | 0);
+        this.combinedctx.drawImage(this.blockRenderer.canvas, 0, 0, this.blockRenderer.width, this.blockRenderer.height, renderedImageSpacing, (height / 2 - itemSideLength / 2) | 0, itemSideLength, itemSideLength);
     }
 
     updatePeriodChange(value) {
