@@ -7,9 +7,12 @@ Creating items for Hypixel Skyblock Concepts (or Minecraft Tooltips) can be a li
 
 This website allows you simply type in the text for an item, and it will automatically render a Minecraft style tooltip out for you, ready for copying straight into your concepts or project.
 
-This is an website that allows you to simply type in the text that you want for an item, and it will automatically render it into Minecraft style tooltip, ready for use in a concept or project. You have the ability to change the color, **boldness**, *italicize*, ~~strikethrough~~ and even <ins>underline</ins>! It uses the same font files that Minecraft uses so you get that "authentic" look how how it would in game. So go crazy with using some of the more obscure Unicode characters. 
+This is an website that allows you to simply type in the text that you want for an item, and it will automatically render it into Minecraft style tooltip, ready for use in a concept or project. You have the ability to change the color, **boldness**, *italicize*, ~~strikethrough~~ and even <ins>underline</ins>! It uses the same font files that Minecraft uses so you get that "authentic" look how how it would in game. So go crazy with using some of the more obscure Unicode characters.
 
 ![UI of the application](images/readme/ui-example.png)
+
+Wanting to feel a little ***fancy***? You have the ability to add an item that sits next to the Tooltip. Blocks or Items? It's your choice! There are hundreds of different options to choose from. There is the ability to change the color of leather armor to whatever you need as well.
+![GIF of various items that could be generated with the tool](images/readme/rendered-items.gif)
 
 ## Features
 - Realtime Rendering\
@@ -22,6 +25,11 @@ This is an website that allows you to simply type in the text that you want for 
 ![Showing the difference between 1.8.9 and 1.21 fonts](images/readme/font-versions.png)
 - 99%+ Similarity to Original Minecraft Rendering\
 <sup>(Subject to the Terms and Conditions of your Personal Standards)</sup>
+- Ability to add blocks, items or player heads that sit next to the generated tooltip.
+    - Player heads can come from a file upload, Base64 string or a link.
+    - Files that are uploaded will remain on the client's computer.
+
+![Small animation of "I'm Blue" by Eiffel 65](images/readme/random-item-generation.gif)
 
 
 ## Example
