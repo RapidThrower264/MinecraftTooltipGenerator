@@ -24,7 +24,7 @@ const RARITIES = {
     "UNCOMMON": {"name": "UNCOMMON", "color": "GREEN"},
     "RARE": {"name": "RARE", "color": "BLUE"},
     "EPIC": {"name": "EPIC", "color": "DARK_PURPLE"},
-    "LEGENDARY": {"name": "LEGENDARY", "color": "YELLOW"},
+    "LEGENDARY": {"name": "LEGENDARY", "color": "GOLD"},
     "MYTHIC": {"name": "MYTHIC", "color": "LIGHT_PURPLE"},
     "DIVINE": {"name": "DIVINE", "color": "AQUA"},
     "SPECIAL": {"name": "SPECIAL", "color": "RED"},
