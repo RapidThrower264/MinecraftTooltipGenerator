@@ -46,22 +46,24 @@ class MinecraftGenerator {
         this.updatePeriodChange(this.settings.updatePeriod);
 
         // creating listeners for all settings so that the generator remains up to date
-        this.settings.getCallback("first-line-gap").addListener((value) => this.forceRerender());
-        this.settings.getCallback("render-background").addListener((value) => this.forceRerender());
-        this.settings.getCallback("font-version").addListener(value => this.forceRerender());
+        this.settings.getCallback("first-line-gap").addListener((value) => this.forceRerender(true, false));
+        this.settings.getCallback("render-background").addListener((value) => this.forceRerender(true, false));
+        this.settings.getCallback("font-version").addListener(value => this.forceRerender(true, false));
         this.settings.getCallback("image-scale").addListener((value) => this.changeWrapperSize());
         this.settings.getCallback("update-period").addListener((value) => this.updatePeriodChange(value));
         this.settings.getCallback("include-display-item").addListener((value) => {
             this.hasBlockRendered = value;
-            this.forceRerender();
+            this.forceRerender(false, true);
         });
-        this.settings.getCallback("display-item-size").addListener((value) => this.forceRerender());
+        this.settings.getCallback("display-item-size").addListener((value) => this.forceRerender(false, false));
         this.settings.getCallback("item-tint-layer-1").addListener((value) => this.blockRenderer.setTintLayer(value, 0));
         this.settings.getCallback("item-tint-layer-2").addListener((value) => this.blockRenderer.setTintLayer(value, 1));
     }
 
-    forceRerender(_) {
+    forceRerender(forceTextRender, forceBlockRender) {
         // force a refresh, respecting the screen refresh setting
+        this.textRenderer.isValid = this.textRenderer.isValid && !forceTextRender;
+        this.blockRenderer.isValid = this.blockRenderer.isValid && !forceBlockRender;
         this.isValid = false;
         if (this.timeout == undefined) {
             this.redrawImage();
