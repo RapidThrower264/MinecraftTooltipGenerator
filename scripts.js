@@ -944,7 +944,7 @@ const STRIKETHROUGH = new MCCode("m", "STRIKETHROUGH", "STRIKE", "text-decoratio
 const UNDERLINE = new MCCode("n", "UNDERLINE", "UNDER", "text-decoration: underline;");
 const ITALIC = new MCCode("o", "ITALIC", "ITALIC", "font-style: italic;");
 const RESET = new MCCode("r", "RESET", "RESET", "");
-const OBFUSCATED = new MCCode("k", "OBFUSCATED", "OBFUSCATED<br><span style='font-size: 0.7em; font-style: italic;'>Requires downloading Gif</span>", "");
+const OBFUSCATED = new MCCode("k", "OBFUSCATED", "OBFUSCATED<br><span style='font-size: 0.7em; font-style: italic;'>Requires downloading the image</span>", "");
 
 const OBFUSCATED_CHARACTER_REPLACEMENT = [
     "¬=\\-3VmÅAºöøxçJyú$7äåîT_²ü/ñÜ8âZÑô&½ªqàgÉoé£ØóXòá+ÆESR4PLD?9BhcCvUNw#èQ·LrjëuGHYF»zÄ¿ù%6ÿnK¼Oedp1ûbæ0ÇÖsM^aW52ê«",
