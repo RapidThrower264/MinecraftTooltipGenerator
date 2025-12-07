@@ -1493,7 +1493,7 @@ window.addEventListener("load", async (event) => {
         } catch (error) {
             const errorData = createDebugInformation("jsonParsing", `Could not parse the content ${data}.`);
             errorData.error = error;
-            createToast("error", "The item data that you copied doesn't seem to be valid.", "You can follow the guide here to find out how to do this!", "Click me to copy relevant debug data to your clipboard", errorData);
+            createToast("error", "The item data that you copied doesn't seem to be valid.", "You can follow the guide <a href='https://www.youtube.com/watch?v=PEChxeNL2R0' target='_blank'>here</a> to find out how to do this!", "Click me to copy relevant debug data to your clipboard", errorData);
             return;
         }
 
