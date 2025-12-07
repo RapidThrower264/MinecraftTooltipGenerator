@@ -158,7 +158,8 @@ class MinecraftGenerator {
             const data = [new ClipboardItem({[blob.type]: blob})];
             await navigator.clipboard.write(data);
         } catch (error) {
-            console.log(error);
+            const errorData = createDebugInformation("imageDownload", error)
+            createToast("error", "There was an issue trying to download the image.", "Typically, this is", "Click me to copy relevant debug data to your clipboard", errorData);
         }
     }
 
@@ -188,7 +189,8 @@ class MinecraftGenerator {
             URL.revokeObjectURL(dataURL);
             document.body.removeChild(link);
         } catch (error) {
-            console.log(error);
+            const errorData = createDebugInformation("imageDownload", error)
+            createToast("error", "There was an issue trying to download the image.", undefined, "Click me to copy relevant debug data to your clipboard", errorData);
         }
     }
 }
@@ -896,7 +898,8 @@ class GlyphSprite {
                 resolve(true);
             }
             this.fontImage.onerror = () => {
-                console.error("Couldn't load file " + this.fontImage.src);
+                const errorData = createDebugInformation("fontImageLoading", `Failed to load ${this.unicodePage}`);
+                createToast("error", `There was an issue trying to load one of the text files for a character.`, "This could mean you are not connected to the Internet,\nOR you are trying to access a emoji/character that doesn't exist.", "Click me to copy relevant debug data to your clipboard", errorData);
                 resolve(false);
             }
             this.fontImage.src = `glyphs/${this.unicodePage}.png`;
@@ -969,9 +972,9 @@ STYLES.forEach((style, index) => {
 var DEFAULT_COLOR = GRAY;
 var DEFAULT_STYLES = new Array(STYLES.length - 1).fill(false);
 
-// registering all of the characters to objects
 const GLYPHS = [];
 const RANDOM_INTROS = ["&cText &9Will &6Go &aHere", "&fGet &cCreative &fWith It!", "&6&lBIG &fWords &b&lGo &fHere", "&fHere's a Canvas...\n     &e&oGo &a&oPaint!"];
+const TOAST_TYPES = {error: {color: "#ff5555"}, issue: {color: "#ffff55"}, success: {color: "#55ff55"}};
 
 var canvas;
 
@@ -994,7 +997,11 @@ var currentOverlay = "";
 var previousOverlay = "";
 var overlayActive = false;
 
-var textarea;
+// important reused input areas and fields
+let textarea;
+let showDisplayItemInput, itemSearchBar, tintColorSelectors;
+let toastContainer, toastTemplate;
+
 
 function createButton(reminderClass, buttonText, color, textInsert) {
     var reminder = document.createElement("button");
@@ -1183,9 +1190,7 @@ window.addEventListener("load", async (event) => {
         input.dispatchEvent(new Event("change"));
     });
 
-    textarea = document.getElementById("generator-textarea");
     textarea.value = RANDOM_INTROS[Math.floor(Math.random() * RANDOM_INTROS.length)];
-    var canvasWrapper = document.getElementById("canvas-wrapper");
 
     loadColors();
     loadStats();
@@ -1420,7 +1425,8 @@ window.addEventListener("load", async (event) => {
     document.getElementById("display-item-settings").appendChild(canvas.blockRenderer.canvas);
     document.getElementById("file-skin-setting").addEventListener("change", (event) => {
         if (event.target.files.length < 1) {
-            console.error("Please select a file!");
+            const errorData = createDebugInformation("fileLoading", `Selected ${event.target.files.length} files.`);
+            createToast("error", `Please select a Minecraft Skin File!`, "It seems like you haven't selected a skin to upload to the renderer.", "Click me to copy relevant debug data to your clipboard", errorData);
             return;
         }
 
