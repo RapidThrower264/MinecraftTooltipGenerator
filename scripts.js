@@ -46,22 +46,24 @@ class MinecraftGenerator {
         this.updatePeriodChange(this.settings.updatePeriod);
 
         // creating listeners for all settings so that the generator remains up to date
-        this.settings.getCallback("first-line-gap").addListener((value) => this.forceRerender());
-        this.settings.getCallback("render-background").addListener((value) => this.forceRerender());
-        this.settings.getCallback("font-version").addListener(value => this.forceRerender());
+        this.settings.getCallback("first-line-gap").addListener((value) => this.forceRerender(true, false));
+        this.settings.getCallback("render-background").addListener((value) => this.forceRerender(true, false));
+        this.settings.getCallback("font-version").addListener(value => this.forceRerender(true, false));
         this.settings.getCallback("image-scale").addListener((value) => this.changeWrapperSize());
         this.settings.getCallback("update-period").addListener((value) => this.updatePeriodChange(value));
         this.settings.getCallback("include-display-item").addListener((value) => {
             this.hasBlockRendered = value;
-            this.forceRerender();
+            this.forceRerender(false, true);
         });
-        this.settings.getCallback("display-item-size").addListener((value) => this.forceRerender());
+        this.settings.getCallback("display-item-size").addListener((value) => this.forceRerender(false, false));
         this.settings.getCallback("item-tint-layer-1").addListener((value) => this.blockRenderer.setTintLayer(value, 0));
         this.settings.getCallback("item-tint-layer-2").addListener((value) => this.blockRenderer.setTintLayer(value, 1));
     }
 
-    forceRerender(_) {
+    forceRerender(forceTextRender, forceBlockRender) {
         // force a refresh, respecting the screen refresh setting
+        this.textRenderer.isValid = this.textRenderer.isValid && !forceTextRender;
+        this.blockRenderer.isValid = this.blockRenderer.isValid && !forceBlockRender;
         this.isValid = false;
         if (this.timeout == undefined) {
             this.redrawImage();
@@ -158,7 +160,8 @@ class MinecraftGenerator {
             const data = [new ClipboardItem({[blob.type]: blob})];
             await navigator.clipboard.write(data);
         } catch (error) {
-            console.log(error);
+            const errorData = createDebugInformation("imageDownload", error)
+            createToast("error", "There was an issue trying to download the image.", "Typically, this is", "Click me to copy relevant debug data to your clipboard", errorData);
         }
     }
 
@@ -188,7 +191,8 @@ class MinecraftGenerator {
             URL.revokeObjectURL(dataURL);
             document.body.removeChild(link);
         } catch (error) {
-            console.log(error);
+            const errorData = createDebugInformation("imageDownload", error)
+            createToast("error", "There was an issue trying to download the image.", undefined, "Click me to copy relevant debug data to your clipboard", errorData);
         }
     }
 }
@@ -896,7 +900,8 @@ class GlyphSprite {
                 resolve(true);
             }
             this.fontImage.onerror = () => {
-                console.error("Couldn't load file " + this.fontImage.src);
+                const errorData = createDebugInformation("fontImageLoading", `Failed to load ${this.unicodePage}`);
+                createToast("error", `There was an issue trying to load one of the text files for a character.`, "This could mean you are not connected to the Internet,\nOR you are trying to access a emoji/character that doesn't exist.", "Click me to copy relevant debug data to your clipboard", errorData);
                 resolve(false);
             }
             this.fontImage.src = `glyphs/${this.unicodePage}.png`;
@@ -939,7 +944,7 @@ const STRIKETHROUGH = new MCCode("m", "STRIKETHROUGH", "STRIKE", "text-decoratio
 const UNDERLINE = new MCCode("n", "UNDERLINE", "UNDER", "text-decoration: underline;");
 const ITALIC = new MCCode("o", "ITALIC", "ITALIC", "font-style: italic;");
 const RESET = new MCCode("r", "RESET", "RESET", "");
-const OBFUSCATED = new MCCode("k", "OBFUSCATED", "OBFUSCATED<br><span style='font-size: 0.7em; font-style: italic;'>Requires downloading Gif</span>", "");
+const OBFUSCATED = new MCCode("k", "OBFUSCATED", "OBFUSCATED<br><span style='font-size: 0.7em; font-style: italic;'>Requires downloading the image</span>", "");
 
 const OBFUSCATED_CHARACTER_REPLACEMENT = [
     "¬=\\-3VmÅAºöøxçJyú$7äåîT_²ü/ñÜ8âZÑô&½ªqàgÉoé£ØóXòá+ÆESR4PLD?9BhcCvUNw#èQ·LrjëuGHYF»zÄ¿ù%6ÿnK¼Oedp1ûbæ0ÇÖsM^aW52ê«",
@@ -969,9 +974,9 @@ STYLES.forEach((style, index) => {
 var DEFAULT_COLOR = GRAY;
 var DEFAULT_STYLES = new Array(STYLES.length - 1).fill(false);
 
-// registering all of the characters to objects
 const GLYPHS = [];
 const RANDOM_INTROS = ["&cText &9Will &6Go &aHere", "&fGet &cCreative &fWith It!", "&6&lBIG &fWords &b&lGo &fHere", "&fHere's a Canvas...\n     &e&oGo &a&oPaint!"];
+const TOAST_TYPES = {error: {color: "#ff5555"}, issue: {color: "#ffff55"}, success: {color: "#55ff55"}};
 
 var canvas;
 
@@ -994,7 +999,11 @@ var currentOverlay = "";
 var previousOverlay = "";
 var overlayActive = false;
 
-var textarea;
+// important reused input areas and fields
+let textarea;
+let showDisplayItemInput, itemSearchBar, tintColorSelectors;
+let toastContainer, toastTemplate;
+
 
 function createButton(reminderClass, buttonText, color, textInsert) {
     var reminder = document.createElement("button");
@@ -1131,7 +1140,110 @@ async function loadFonts() {
         })
 }
 
+function setBase64SkinTexture(texture) {
+    try {
+        canvas.blockRenderer.setBase64SkinTexture(texture);
+    } catch (error) {
+        const errorData = createDebugInformation("base64SkinInput", `Could not load the base64 skin.`);
+        errorData.error = error;
+        createToast("error", `There was a problem trying to load the skin that you have provided.`, "The provided Base64 url seems to be encoded incorrectly and is missing important details.", "Click me to copy relevant debug data to your clipboard", errorData);
+    }
+}
+
+function selectItem(targetItem, tints) {
+    let targetItemModel = targetItem.replaceAll(" ", "_").toLowerCase();
+    itemSearchBar.value = targetItem;
+    if (!modelInformation[targetItemModel]) {
+        const errorData = createDebugInformation("loadingItem", `Could not find ${targetItemModel}, derived from ${targetItem}`);
+        createToast("error", `Could not find the item for "${targetItem}"`, "This item might be disabled/missing for rendering item list.\nCheck if it is available and try again.", "Click me to copy relevant debug data to your clipboard", errorData);
+        return;
+    }
+
+    document.activeElement.blur();
+
+    let headRenderingSettings = document.getElementById("head-generator-settings");
+    let index = 0;
+    if (targetItemModel == "player_head" || targetItemModel == "skull") {
+        headRenderingSettings.classList.add("active");
+        if (tints[0])
+            setBase64SkinTexture(tints[0]);
+    } else {
+        headRenderingSettings.classList.remove("active");
+
+        let foundTints = modelInformation[targetItemModel]?.tints ?? [];
+        let tints = [];
+        Object.values(foundTints).forEach((element) => {
+            tints.push(element?.value ?? element?.default ?? 8174955);
+            tintColorSelectors[index].classList.add("active");
+            
+            let categories = tintColorSelectors[index].querySelectorAll("div");
+            for (let i = 0; i < categories.length; i++) {
+                categories[i].style.display = categories[i].getAttribute("category") == element.type ? "block" : "none";
+            }
+            tintColorSelectors[index].querySelector(".initial").value = tints[index];
+            tintColorSelectors[index].querySelector("select").value = tints[index];
+            tintColorSelectors[index].querySelector("input[type='color']").value = "#" + new Uint8Array([(tints[index] >> 16) & 0xff, (tints[index] >> 8) & 0xff, tints[index] & 0xff]).toHex();
+            index++;
+        });
+        canvas.blockRenderer.setTint(tints);
+    }
+    canvas.blockRenderer.setItem(targetItemModel);
+    
+    for (; index < tintColorSelectors.length; index++) {
+        tintColorSelectors[index].classList.remove("active");
+    }
+}
+
+function createDebugInformation(activity, problem) {
+    return {"activity": activity, "problem": problem};
+}
+
+function createToast(type, text, subText, errorMessage, debugInformation) {
+    let toast = toastTemplate.cloneNode(true);
+    toast.setAttribute("style", `--toast-color: ${TOAST_TYPES[type].color};`);
+    toast.removeAttribute("id");
+    toast.querySelector(".toast-text").innerHTML = text.replace(/\n/g, "<br>");
+
+    let subTextElement = toast.querySelector(".toast-subtext");
+    if (subText != undefined)
+        subTextElement.innerHTML = subText.replace(/\n/g, "<br>");
+    else
+        subTextElement.style.display = "none";
+
+    if (errorMessage != undefined) {
+        let toastHoverable = toast.querySelector(".toast-hoverable");
+        toastHoverable.innerHTML = errorMessage;
+        toastHoverable.classList.remove("disabled");
+        
+        const errorData = {text: textarea.value, item: itemSearchBar.value, extra: debugInformation};
+        console.error("There was an error that happened while completing an action.\nEither make a bug report or contact one of the developers.", errorData);
+        toast.addEventListener("click", () => {
+            navigator.clipboard.writeText(JSON.stringify(errorData));
+        });
+    }
+
+    toast.querySelector("img").src = `images/${type}.png`;
+
+    let animationsCompleted = 0;
+    toast.addEventListener("animationend", () => {
+        animationsCompleted++;
+        if (animationsCompleted > 1)
+            toast.remove();
+    });
+
+    toastContainer.appendChild(toast);
+}
+
 window.addEventListener("load", async (event) => {
+    toastContainer = document.getElementById("toast-container");
+    toastTemplate = document.getElementById("toast-template");
+
+    textarea = document.getElementById("generator-textarea");
+
+    showDisplayItemInput = document.getElementById("include-display-item");
+    itemSearchBar = document.getElementById("searched-item-input");
+    tintColorSelectors = document.querySelectorAll(".tint-color-selector");
+
     // adding event listeners to all of the settings fields
     let settingInputs = document.querySelectorAll(".setting");
     settingInputs.forEach(input => {
@@ -1183,9 +1295,7 @@ window.addEventListener("load", async (event) => {
         input.dispatchEvent(new Event("change"));
     });
 
-    textarea = document.getElementById("generator-textarea");
     textarea.value = RANDOM_INTROS[Math.floor(Math.random() * RANDOM_INTROS.length)];
-    var canvasWrapper = document.getElementById("canvas-wrapper");
 
     loadColors();
     loadStats();
@@ -1282,47 +1392,6 @@ window.addEventListener("load", async (event) => {
             recyclerElements[selectedIndex].scrollIntoView({block: "nearest"});
         }
 
-        let tintColorSelectors = document.querySelectorAll(".tint-color-selector");
-        let onSelect = (targetItem) => {
-            let targetItemModel = targetItem.replaceAll(" ", "_").toLowerCase();
-            if (!modelInformation[targetItemModel]) {
-                throw new Error("Couldn't find the requested item");
-            }
-
-            searchBar.value = targetItem;
-            document.activeElement.blur();
-            canvas.blockRenderer.setItem(targetItemModel);
-
-            let headRenderingSettings = document.getElementById("head-generator-settings");
-            let index = 0;
-            if (targetItemModel == "player_head") {
-                headRenderingSettings.classList.add("active");
-            } else {
-                headRenderingSettings.classList.remove("active");
-
-                let foundTints = modelInformation[targetItemModel]?.tints ?? [];
-                let tints = [];
-                Object.values(foundTints).forEach((element) => {
-                    tints.push(element?.value ?? element?.default ?? 8174955);
-                    tintColorSelectors[index].classList.add("active");
-                    
-                    let categories = tintColorSelectors[index].querySelectorAll("div");
-                    for (let i = 0; i < categories.length; i++) {
-                        categories[i].style.display = categories[i].getAttribute("category") == element.type ? "block" : "none";
-                    }
-                    tintColorSelectors[index].querySelector(".initial").value = tints[index];
-                    tintColorSelectors[index].querySelector("select").value = tints[index];
-                    tintColorSelectors[index].querySelector("input[type='color']").value = "#" + new Uint8Array([(tints[index] >> 16) & 0xff, (tints[index] >> 8) & 0xff, tints[index] & 0xff]).toHex();
-                    index++;
-                });
-                canvas.blockRenderer.setTint(tints);
-            }
-            
-            for (; index < tintColorSelectors.length; index++) {
-                tintColorSelectors[index].classList.remove("active");
-            }
-        }
-
         let elementCount = 10;
         let selectedIndex = -1;
         let activeElements = 0;
@@ -1333,7 +1402,7 @@ window.addEventListener("load", async (event) => {
             if (i > 0) {
                 listElement.addEventListener("click", (event) => {
                     if (event.target.getAttribute("target-item"))
-                        onSelect(event.target.getAttribute("target-item"));
+                        selectItem(event.target.getAttribute("target-item"));
                 });
             }
             dropdownArea.appendChild(listElement);
@@ -1416,11 +1485,60 @@ window.addEventListener("load", async (event) => {
         });
     });
 
+    document.getElementById("nbt-extractor-btn").addEventListener("click", () => {
+        let data = document.getElementById("nbt-textarea").value;
+        let json;
+        try {
+            json = JSON.parse(data.replace(/    *(\w+)/g, '"$1"').replace(/:\s*(-?\d+(?:\.\d+)?[bBsSlLfFdD]?)/g, ': "$1"'));
+        } catch (error) {
+            const errorData = createDebugInformation("jsonParsing", `Could not parse the content ${data}.`);
+            errorData.error = error;
+            createToast("error", "The item data that you copied doesn't seem to be valid.", "You can follow the guide <a href='https://www.youtube.com/watch?v=PEChxeNL2R0' target='_blank'>here</a> to find out how to do this!", "Click me to copy relevant debug data to your clipboard", errorData);
+            return;
+        }
+
+        let itemID, itemName, itemLore;
+        itemID = json.id?.replace("minecraft:", "").replace(/_/g, " ");
+        if (itemID != undefined) {
+            showDisplayItemInput.checked = true;
+            showDisplayItemInput.dispatchEvent(new Event("change"));
+            
+            let tints = [];
+            if (itemID == "skull") {
+                let skull = json.tag?.SkullOwner?.Properties?.textures[0]?.Value ?? undefined;
+                tints.push(skull);
+            }
+            selectItem(itemID, tints);
+        }
+
+        itemName = json.tag?.display?.Name;
+        if (itemName == undefined) {
+            itemName = "";
+            createToast("issue", "There was an issue trying to retrieve the name for this item.");
+        }
+
+        itemLore = json.tag?.display?.Lore;
+        if (itemLore == undefined) {
+            itemLore = [];
+            createToast("issue", "There was an issue trying to retrieve the item lore for this item.", undefined, "Click me to copy relevant debug data to your clipboard", {});
+        }
+        itemLore.unshift(itemName);
+        
+        let itemText = "";
+        for (const line of itemLore) {
+            itemText += `${line?.replace(/§/g, "&")}\n`;
+        }
+        textarea.value = itemText.substring(0, itemText.length - 1);
+        textarea.dispatchEvent(new Event("input"));
+    });
+
+    const canvasWrapper = document.getElementById("canvas-wrapper");
     canvas = new MinecraftGenerator(canvasWrapper, textarea, settings);
     document.getElementById("display-item-settings").appendChild(canvas.blockRenderer.canvas);
     document.getElementById("file-skin-setting").addEventListener("change", (event) => {
         if (event.target.files.length < 1) {
-            console.error("Please select a file!");
+            const errorData = createDebugInformation("fileLoading", `Selected ${event.target.files.length} files.`);
+            createToast("error", `Please select a Minecraft Skin File!`, "It seems like you haven't selected a skin to upload to the renderer.", "Click me to copy relevant debug data to your clipboard", errorData);
             return;
         }
 
@@ -1430,7 +1548,7 @@ window.addEventListener("load", async (event) => {
         canvas.blockRenderer.setSkinTexture(event.target.value);
     });
     document.getElementById("skin-base64-input").addEventListener("change", (event) => {
-        canvas.blockRenderer.setBase64SkinTexture(event.target.value);
+        setBase64SkinTexture(event.target.value);
     });
     
     await canvas.redrawImage();

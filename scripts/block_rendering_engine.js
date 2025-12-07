@@ -496,7 +496,7 @@ class BlockRenderingEngine {
         let skinData = JSON.parse(window.atob(base64String));
         let url = skinData?.textures?.SKIN?.url ?? undefined;
         if (url == undefined) {
-            console.error("Could not find this skin!");
+            throw new Error("Could not find the skin!", { details: `Skin data provided: ${base64String}, Parsed Data: ${skinData}`});
         } else {
             this.setSkinTexture(url);
         }

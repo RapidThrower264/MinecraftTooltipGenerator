@@ -66,11 +66,8 @@ button:hover {
 textarea {
     border: 2px solid rgb(118, 118, 118);
     box-shadow: 2px 2px 10px #3e4051;
-    height: 20rem;
-    width: calc(100% - 8em);
-    margin: 1em;
-    margin-right: 7em;
     font-size: 1em;
+    margin: 1em;
 }
 
 li {
@@ -117,6 +114,12 @@ main {
     width: 100%;
     gap: 1em;
     padding-bottom: 2em;
+}
+
+#generator-textarea {
+    width: calc(100% - 8em);
+    height: 20rem;
+    margin-right: 7em;
 }
 
 #canvas-wrapper canvas {
@@ -487,6 +490,11 @@ input[type="range"]::-moz-range-thumb {
     gap: 0.5em;
 }
 
+#nbt-textarea {
+    width: calc(100% - 2em);
+    min-height: 30em;
+}
+
 .tip::before {
     content: "USEFUL TIP: ";
     font-weight: 800;
@@ -529,6 +537,145 @@ input[type="range"]::-moz-range-thumb {
     font-style: italic;
     color: #777;
     font-size: 0.9em;
+}
+
+#toast-container {
+    position: absolute;
+    top: 1em;
+    right: 0;
+    width: 20em;
+    overflow-x: hidden;
+    display: flex;
+    flex-direction: column;
+    gap: 1em;
+}
+
+@keyframes toast-enter {
+    0% {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+    80% {
+        transform: translate(20%);
+        opacity: 0;
+    }
+    100% {
+        transform: translateX(0%);
+        opacity: 1;
+    }
+}
+
+@keyframes toast-progress {
+    0% {
+        width: 0%;
+    }
+    100% {
+        width: 100%;
+    }
+}
+
+.toast {
+    --_background: var(--background);
+    --_border: var(--purple-border);
+    --_toast-color: var(--toast-color, white);
+    --_animation-duration: var(--animation-duration, 20s);
+    position: relative;
+    background-color: var(--_background);
+    padding: 1em 1.2em;
+    border: 0.5em solid var(--_border);
+    width: 19em;
+    color: white;
+    margin: 0.5em;
+    left: 1em;
+    animation: 0.75s toast-enter 1 ease-in-out, 0.75s var(--_animation-duration) reverse toast-enter 1 ease-in-out forwards;
+}
+
+.toast img {
+    height: 1.25em;
+    margin-bottom: 0.5em;
+}
+
+.toast-content {
+    display: flex;
+    flex-direction: column;
+}
+
+.toast-subtext {
+    color: #777;
+    margin-top: 0.25em;
+}
+
+.toast-hoverable {
+    display: none;
+    color: #a0a0a0;
+    margin-top: 0.5em;
+    font-weight: 700;
+}
+
+.toast:hover .toast-hoverable {
+    display: block;
+}
+
+.toast:hover .toast-hoverable.disabled {
+    display: none;
+}
+
+#toast-template {
+    display: none;
+}
+
+.toast-border {
+    position: absolute;
+    top: -1em;
+    bottom: -1em;
+    left: -1em;
+    right: -1em;
+    z-index: -1;
+}
+
+.toast-border-inline, .toast-border-top, .toast-border-bottom {
+    content: '';
+    position: absolute;
+    background-color: var(--_background);
+    z-index: -1;
+}
+
+.toast-border-inline {
+    top: 0.5em;
+    bottom: 0.5em;
+    width: 0.5em;
+}
+
+.toast-border-top, .toast-border-bottom {
+    right: 0.5em;
+    left: 0.5em;
+    height: 0.5em;
+}
+
+.toast-border-bottom {
+    bottom: 0;
+}
+
+.toast-progress {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    background-color: var(--_toast-color);
+    animation: var(--_animation-duration, 20s) toast-progress infinite linear;
+    height: 0.5em;
+    width: 0;
+    opacity: var(--_opacity, 1);
+    transition: opacity 0.2s ease-in-out;
+}
+
+.toast:hover {
+    animation-play-state: running, paused;
+}
+
+.toast:hover * {
+    --_opacity: 0.25;
+    animation-play-state: paused;
+    cursor: pointer;
 }
 
 #footer-main {
