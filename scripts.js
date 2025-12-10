@@ -20,7 +20,7 @@ class MinecraftGenerator {
 
         this.textRenderer = new TextGenerator(this.settings);
         this.textRenderer.setText(textarea.value);
-        this.blockRenderer = new BlockRenderingEngine(400, 400, document.getElementById("skin-image"));
+        this.blockRenderer = new BlockRenderingEngine(512, 512, document.getElementById("target-image"), document.getElementById("skin-image"), document.getElementById("enchantment-glint-image"));
         this.canvasWrapper.appendChild(this.textRenderer.canvas);
 
         this.textCanvas = this.textRenderer.canvas;
@@ -55,6 +55,7 @@ class MinecraftGenerator {
             this.hasBlockRendered = value;
             this.forceRerender(false, true);
         });
+        this.settings.getCallback("apply-enchant-glint").addListener((value) => this.blockRenderer.setEnchanted(value));
         this.settings.getCallback("display-item-size").addListener((value) => this.forceRerender(false, false));
         this.settings.getCallback("item-tint-layer-1").addListener((value) => this.blockRenderer.setTintLayer(value, 0));
         this.settings.getCallback("item-tint-layer-2").addListener((value) => this.blockRenderer.setTintLayer(value, 1));
@@ -779,6 +780,7 @@ class Settings {
     constructor() {
         // item display settings
         this._includeDisplayItem = new Callback(false);
+        this._applyEnchantGlint = new Callback(false);
         this._displayItemSize = new Callback("ratio");
         this._itemTintLayer1 = new Callback("#000000");
         this._itemTintLayer2 = new Callback("#ffffff");
@@ -797,6 +799,7 @@ class Settings {
             "update-period": this._updatePeriod,
             "image-scale": this._imageScale,
             "include-display-item": this._includeDisplayItem,
+            "apply-enchant-glint": this._applyEnchantGlint,
             "display-item-size": this._displayItemSize,
             "item-tint-layer-1": this._itemTintLayer1,
             "item-tint-layer-2": this._itemTintLayer2
@@ -825,6 +828,10 @@ class Settings {
 
     get includeDisplayItem() {
         return this._includeDisplayItem.value;
+    }
+
+    get applyEnchantGlint() {
+        return this._applyEnchantGlint.value;
     }
 
     get displayItemSize() {
@@ -914,7 +921,7 @@ const POTION_OPTIONS = {"Default": 3694022, "Speed": 3402751, "Slowness": 915452
             "Water Breathing": 10017472, "Invisibility": 16185078, "Blindness": 2039587, "Night Vision": 12779366, "Hunger": 5797459, "Weakness": 4738376, 
             "Poison": 8889187, "Wither": 7561558, "Health Boost": 16284963, "Absorption": 2445989, "Saturation": 16262179, "Glowing": 9740385, "Levitation": 13565951, 
             "Fatal Poison": 5149489, "Luck": 5882118, "Bad Luck": 12624973, "Slow Falling": 15978425, "Conduit Power": 1950417, "Dolphin's Grace": 8954814, "Bad Omen": 745784, 
-            "Hero of the Village": 4521796, "Darkness": 2696993, "T rial Omen": 1484454, "Raid Omen": 14565464, "Infested": 9214860, "Oozing": 10092451, "Weaving": 7891290, 
+            "Hero of the Village": 4521796, "Darkness": 2696993, "Trial Omen": 1484454, "Raid Omen": 14565464, "Infested": 9214860, "Oozing": 10092451, "Weaving": 7891290, 
             "Wind Charged": 12438015, "Slowness Resistance": 9274086};
 const DYE_OPTIONS = {"White": 16383998, "Orange": 16351261, "Magenta": 13061821, "Light Blue": 3847130, "Yellow": 16701501, "Lime": 8439583, "Pink": 15961002, "Gray": 4673362, 
             "Light Gray": 10329495, "Cyan": 1481884, "Purple": 8991416, "Blue": 3949738, "Brown": 8606770, "Green": 6192150, "Red": 11546150, "Black": 1908001};
@@ -1447,7 +1454,7 @@ window.addEventListener("load", async (event) => {
             let items = itemInformation[word.charAt(0)];
             let wordIndex = 0;
             let elementIndex = 1;
-            let regex = new RegExp(`(${word.toLowerCase()})`, "i");
+            let regex = new RegExp(`^${word.toLowerCase()}`, "i");
             selectedIndex = 0;
             activeElements = 0;
             while (elementIndex < elementCount && wordIndex < items.length) {
