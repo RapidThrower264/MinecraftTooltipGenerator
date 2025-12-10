@@ -20,7 +20,7 @@ class MinecraftGenerator {
 
         this.textRenderer = new TextGenerator(this.settings);
         this.textRenderer.setText(textarea.value);
-        this.blockRenderer = new BlockRenderingEngine(512, 512, document.getElementById("target-image"), document.getElementById("skin-image"));
+        this.blockRenderer = new BlockRenderingEngine(512, 512, document.getElementById("target-image"), document.getElementById("skin-image"), document.getElementById("enchantment-glint-image"));
         this.canvasWrapper.appendChild(this.textRenderer.canvas);
 
         this.textCanvas = this.textRenderer.canvas;
@@ -55,6 +55,7 @@ class MinecraftGenerator {
             this.hasBlockRendered = value;
             this.forceRerender(false, true);
         });
+        this.settings.getCallback("apply-enchant-glint").addListener((value) => this.blockRenderer.setEnchanted(value));
         this.settings.getCallback("display-item-size").addListener((value) => this.forceRerender(false, false));
         this.settings.getCallback("item-tint-layer-1").addListener((value) => this.blockRenderer.setTintLayer(value, 0));
         this.settings.getCallback("item-tint-layer-2").addListener((value) => this.blockRenderer.setTintLayer(value, 1));
@@ -779,6 +780,7 @@ class Settings {
     constructor() {
         // item display settings
         this._includeDisplayItem = new Callback(false);
+        this._applyEnchantGlint = new Callback(false);
         this._displayItemSize = new Callback("ratio");
         this._itemTintLayer1 = new Callback("#000000");
         this._itemTintLayer2 = new Callback("#ffffff");
@@ -797,6 +799,7 @@ class Settings {
             "update-period": this._updatePeriod,
             "image-scale": this._imageScale,
             "include-display-item": this._includeDisplayItem,
+            "apply-enchant-glint": this._applyEnchantGlint,
             "display-item-size": this._displayItemSize,
             "item-tint-layer-1": this._itemTintLayer1,
             "item-tint-layer-2": this._itemTintLayer2
@@ -825,6 +828,10 @@ class Settings {
 
     get includeDisplayItem() {
         return this._includeDisplayItem.value;
+    }
+
+    get applyEnchantGlint() {
+        return this._applyEnchantGlint.value;
     }
 
     get displayItemSize() {

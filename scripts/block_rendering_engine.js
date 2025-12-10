@@ -109,7 +109,7 @@ class Texture {
 
 class TextureManager {
     // Manages the textures and models for the renderer
-    constructor(spritesheetImage, skinImage) {
+    constructor(spritesheetImage, skinImage, enchantmentGlintImage) {
         this.targetImage = spritesheetImage;
         this.width = this.targetImage.width;
         this.height = this.targetImage.height;
@@ -129,6 +129,14 @@ class TextureManager {
             this.skinCTX.drawImage(this.skinImage, 0, 0);
         });
         this.skinCTX.drawImage(this.skinImage, 0, 0);
+
+        this.enchantGlintCanvas = document.createElement("canvas");
+        this.enchantGlintSize = 128;
+        this.enchantGlintCanvas.width = this.enchantGlintSize;
+        this.enchantGlintCanvas.height = this.enchantGlintSize;
+        this.enchantCTX = this.enchantGlintCanvas.getContext("2d", {"willReadFrequently": true});
+        this.enchantCTX.imageSmoothingEnabled = false;
+        this.enchantmentGlintImage = enchantmentGlintImage;
     }
 
     deepMergeReverse(target, source) {
@@ -161,18 +169,37 @@ class TextureManager {
         return model;
     }
 
-    getTexture(textureName, tint) {
+    getTexture(textureName, tint, enchant) {
         // gets the texture data for a particular model
         let texture = spritesheet[textureName];
         let imageData, textureSize;
-        if (!texture["skin"]) {
-            textureSize = 16;
-            imageData = this.ctx.getImageData(texture.x, texture.y, textureSize, textureSize).data;
-        } else {
+        if (texture["skin"]) {
             textureSize = 8;
             imageData = this.skinCTX.getImageData(texture.x, texture.y, textureSize, textureSize).data;
+        } else if (enchant) {
+            textureSize = this.enchantGlintSize;
+            imageData = this.applyEnchantLayer(this.textureCanvas, texture.x, texture.y, 16).data;
+        } else {
+            textureSize = 16;
+            imageData = this.ctx.getImageData(texture.x, texture.y, textureSize, textureSize).data;
         }
+        
         return new Texture("", texture.x, texture.y, textureSize, textureSize, imageData, tint);
+    }
+
+    applyEnchantLayer(canvas, x, y, size) {
+        this.enchantCTX.globalCompositeOperation = "source-over";
+        this.enchantCTX.globalAlpha = 1;
+        this.enchantCTX.drawImage(canvas, x, y, size, size, 0, 0, this.enchantGlintSize, this.enchantGlintSize);
+
+        this.enchantCTX.globalCompositeOperation = "screen";
+        this.enchantCTX.globalAlpha = 0.776;
+        // put the rotation code in here...
+        this.enchantCTX.drawImage(this.enchantmentGlintImage, 0, 0, this.enchantGlintSize, this.enchantGlintSize, 0, 0, 1024, 1024);
+
+        this.enchantCTX.globalCompositeOperation = "destination-in";
+        this.enchantCTX.drawImage(canvas, x, y, size, size, 0, 0, this.enchantGlintSize, this.enchantGlintSize);
+        return this.enchantCTX.getImageData(0, 0, this.enchantGlintSize, this.enchantGlintSize);
     }
 
     setObjectURL(objectURL) {
@@ -191,7 +218,7 @@ class BlockRenderingEngine {
         [4, 7, 0, 3, "down", 0, 2]
     ]
 
-    constructor(width, height, spritesheetImage, skinImage) {
+    constructor(width, height, spritesheetImage, skinImage, enchantmentGlintImage) {
         this.canvas = document.createElement("canvas");
         this.ctx = this.canvas.getContext("2d", {"willReadFrequently": true});
         this.defaultWidth = width;
@@ -202,7 +229,7 @@ class BlockRenderingEngine {
         this.isValid = false;
         this.data = null;
         this.zBuffer = null;
-        this.textureManager = new TextureManager(spritesheetImage, skinImage);
+        this.textureManager = new TextureManager(spritesheetImage, skinImage, enchantmentGlintImage);
         skinImage.addEventListener("load", () => this.isValid = false);
         skinImage.crossOrigin = "Anonymous";
 
@@ -214,6 +241,7 @@ class BlockRenderingEngine {
 
         this.modelName = null;
         this.tint = [];
+        this.isEnchanted = false;
     }
 
     setSize(width, height) {
@@ -221,7 +249,7 @@ class BlockRenderingEngine {
         this.height = height;
         this.canvas.width = width;
         this.canvas.height = height;
-        this.canvas.style.imageRendering = width == 16 ? "pixelated" : "auto";
+        this.canvas.style.imageRendering = "pixelated";
     }
 
     setAntiAliasing(context) {
@@ -392,16 +420,16 @@ class BlockRenderingEngine {
         let model = this.textureManager.getModel(this.modelName);
         if (model["elements"]) {
             this.setSize(this.defaultWidth, this.defaultHeight);
-            this.renderBlock(model, this.tint);
+            this.renderBlock(model, this.tint, this.isEnchanted);
         } else {
             this.setSize(16, 16);
-            this.renderGenerated(model, this.tint);
+            this.renderGenerated(model, this.tint, this.isEnchanted);
         }
 
         this.isValid = true;
     }
 
-    renderBlock(model, tints) {
+    renderBlock(model, tints, isEnchanted) {
         // renders a block to the screen
         this.zBuffer = new Float64Array(this.width * this.height).fill(-653000);
         let imageData = this.ctx.getImageData(0, 0, this.width, this.height);
@@ -435,7 +463,7 @@ class BlockRenderingEngine {
                     let targetTexture = modelFace.texture;
                     while (targetTexture.includes("#"))
                         targetTexture = model.textures[targetTexture.replaceAll("#", "")];
-                    let texture = this.textureManager.getTexture(targetTexture, modelFace?.tintindex > -1 ? tints[modelFace.tintindex] : undefined);
+                    let texture = this.textureManager.getTexture(targetTexture, modelFace?.tintindex > -1 ? tints[modelFace.tintindex] : undefined, isEnchanted);
                     
                     if (!modelFace.uv)
                         modelFace.uv = [modelData.from[face[5]], modelData.from[face[6]], modelData.to[face[5]], modelData.to[face[6]]];
@@ -450,21 +478,23 @@ class BlockRenderingEngine {
         this.ctx.putImageData(imageData, 0, 0);
     }
 
-    renderGenerated(model, tints) {
+    renderGenerated(model, tints, isEnchanted) {
+        this.targetData = new Uint8ClampedArray(4 * this.width * this.height);
+
         // renders an item to the screen.
         let layer = 0;
         let layers = Object.values(model.textures);
-        if (model["tints"]) {
-            for (const tint of model.tints) {
-                let texture = this.textureManager.getTexture(layers[layer]);
-                this.drawTintedImage(texture, tints[layer] != undefined ? tints[layer] : tint.default);
-                layer++;
-            }
-        }
-        
+        let layeredTints = tints ?? [];
         for (; layer < layers.length; layer++) {
-            let texture = this.textureManager.getTexture(layers[layer]);
-            this.drawImage(texture);
+            let tint = layeredTints[layer] ?? undefined;
+            this.drawImage(this.textureManager.getTexture(layers[layer], tint));
+        }
+        this.ctx.putImageData(new ImageData(this.targetData, this.width, this.height), 0, 0);     
+
+        if (isEnchanted) {
+            let imageData = this.textureManager.applyEnchantLayer(this.canvas, 0, 0, this.width);
+            this.setSize(imageData.width, imageData.height);
+            this.ctx.putImageData(imageData, 0, 0);
         }
     }
 
@@ -489,6 +519,11 @@ class BlockRenderingEngine {
 
     setSkinTexture(objectURL) {
         this.textureManager.setObjectURL(objectURL);
+        this.isValid = false;
+    }
+
+    setEnchanted(isEnchanted) {
+        this.isEnchanted = isEnchanted;
         this.isValid = false;
     }
 
