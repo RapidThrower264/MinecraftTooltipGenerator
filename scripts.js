@@ -1169,13 +1169,17 @@ function selectItem(targetItem, tints) {
     document.activeElement.blur();
 
     let headRenderingSettings = document.getElementById("head-generator-settings");
+    let enchantGlintOption = document.getElementById("apply-enchant-setting");
+
     let index = 0;
     if (targetItemModel == "player_head" || targetItemModel == "skull") {
         headRenderingSettings.classList.add("active");
+        enchantGlintOption.classList.remove("active");
         if (tints && tints[0])
             setBase64SkinTexture(tints[0]);
     } else {
         headRenderingSettings.classList.remove("active");
+        enchantGlintOption.classList.add("active");
 
         let foundTints = modelInformation[targetItemModel]?.tints ?? [];
         let tints = [];
