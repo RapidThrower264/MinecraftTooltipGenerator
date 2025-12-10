@@ -914,7 +914,7 @@ const POTION_OPTIONS = {"Default": 3694022, "Speed": 3402751, "Slowness": 915452
             "Water Breathing": 10017472, "Invisibility": 16185078, "Blindness": 2039587, "Night Vision": 12779366, "Hunger": 5797459, "Weakness": 4738376, 
             "Poison": 8889187, "Wither": 7561558, "Health Boost": 16284963, "Absorption": 2445989, "Saturation": 16262179, "Glowing": 9740385, "Levitation": 13565951, 
             "Fatal Poison": 5149489, "Luck": 5882118, "Bad Luck": 12624973, "Slow Falling": 15978425, "Conduit Power": 1950417, "Dolphin's Grace": 8954814, "Bad Omen": 745784, 
-            "Hero of the Village": 4521796, "Darkness": 2696993, "T rial Omen": 1484454, "Raid Omen": 14565464, "Infested": 9214860, "Oozing": 10092451, "Weaving": 7891290, 
+            "Hero of the Village": 4521796, "Darkness": 2696993, "Trial Omen": 1484454, "Raid Omen": 14565464, "Infested": 9214860, "Oozing": 10092451, "Weaving": 7891290, 
             "Wind Charged": 12438015, "Slowness Resistance": 9274086};
 const DYE_OPTIONS = {"White": 16383998, "Orange": 16351261, "Magenta": 13061821, "Light Blue": 3847130, "Yellow": 16701501, "Lime": 8439583, "Pink": 15961002, "Gray": 4673362, 
             "Light Gray": 10329495, "Cyan": 1481884, "Purple": 8991416, "Blue": 3949738, "Brown": 8606770, "Green": 6192150, "Red": 11546150, "Black": 1908001};
