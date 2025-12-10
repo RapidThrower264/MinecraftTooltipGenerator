@@ -1447,7 +1447,7 @@ window.addEventListener("load", async (event) => {
             let items = itemInformation[word.charAt(0)];
             let wordIndex = 0;
             let elementIndex = 1;
-            let regex = new RegExp(`(${word.toLowerCase()})`, "i");
+            let regex = new RegExp(`^${word.toLowerCase()}`, "i");
             selectedIndex = 0;
             activeElements = 0;
             while (elementIndex < elementCount && wordIndex < items.length) {
