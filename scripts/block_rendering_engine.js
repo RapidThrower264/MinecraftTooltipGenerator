@@ -109,8 +109,8 @@ class Texture {
 
 class TextureManager {
     // Manages the textures and models for the renderer
-    constructor(spritesheet, skinImage) {
-        this.targetImage = document.getElementById(spritesheet);
+    constructor(spritesheetImage, skinImage) {
+        this.targetImage = spritesheetImage;
         this.width = this.targetImage.width;
         this.height = this.targetImage.height;
         this.textureCanvas = document.createElement("canvas");
@@ -191,7 +191,7 @@ class BlockRenderingEngine {
         [4, 7, 0, 3, "down", 0, 2]
     ]
 
-    constructor(width, height, skinImage) {
+    constructor(width, height, spritesheetImage, skinImage) {
         this.canvas = document.createElement("canvas");
         this.ctx = this.canvas.getContext("2d", {"willReadFrequently": true});
         this.defaultWidth = width;
@@ -202,7 +202,7 @@ class BlockRenderingEngine {
         this.isValid = false;
         this.data = null;
         this.zBuffer = null;
-        this.textureManager = new TextureManager("target-image", skinImage);
+        this.textureManager = new TextureManager(spritesheetImage, skinImage);
         skinImage.addEventListener("load", () => this.isValid = false);
         skinImage.crossOrigin = "Anonymous";
 

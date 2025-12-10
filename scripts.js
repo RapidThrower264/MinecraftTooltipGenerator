@@ -20,7 +20,7 @@ class MinecraftGenerator {
 
         this.textRenderer = new TextGenerator(this.settings);
         this.textRenderer.setText(textarea.value);
-        this.blockRenderer = new BlockRenderingEngine(400, 400, document.getElementById("skin-image"));
+        this.blockRenderer = new BlockRenderingEngine(512, 512, document.getElementById("target-image"), document.getElementById("skin-image"));
         this.canvasWrapper.appendChild(this.textRenderer.canvas);
 
         this.textCanvas = this.textRenderer.canvas;
