@@ -233,12 +233,6 @@ class BlockRenderingEngine {
         skinImage.addEventListener("load", () => this.isValid = false);
         skinImage.crossOrigin = "Anonymous";
 
-        this.tintBuffer = document.createElement("canvas");
-        this.tintCTX = this.tintBuffer.getContext("2d", {"willReadFrequently": true});
-        this.tintBuffer.width = 16;
-        this.tintBuffer.height = 16;
-        this.setAntiAliasing(this.tintCTX);
-
         this.modelName = null;
         this.tint = [];
         this.isEnchanted = false;
@@ -381,28 +375,12 @@ class BlockRenderingEngine {
     }
 
     drawImage(texture) {
-        // draws an image to the screen without any modifications
-        this.ctx.drawImage(this.textureManager.targetImage, texture.x, texture.y, texture.width, texture.height, 0, 0, this.width, this.height);
-    }
-
-    drawTintedImage(texture, tintColor) {
-        // draws an image to the screen, tinting the image based on a tint color
-        const ctx = this.tintCTX;
-        const width = texture.width;
-        const height = texture.height;
-
-        ctx.globalCompositeOperation = 'source-over';
-        ctx.clearRect(0, 0, width, height);
-        ctx.drawImage(this.textureManager.targetImage, texture.x, texture.y, width, height, 0, 0, width, height);
-        
-        ctx.globalCompositeOperation = 'multiply';
-        ctx.fillStyle = `rgb(${(tintColor >> 16) & 0xFF},${(tintColor >> 8) & 0xFF},${tintColor & 0xFF})`;
-        ctx.fillRect(0, 0, width, height);
-
-        ctx.globalCompositeOperation = 'destination-in';
-        ctx.drawImage(this.textureManager.targetImage, texture.x, texture.y, width, height, 0, 0, width, height);
-
-        this.ctx.drawImage(this.tintBuffer, 0, 0, 16, 16, 0, 0, this.width, this.height);
+        let data = texture.image;
+        let length = data.length;
+        for (let i = 0; i < length; i++) {
+            if (data[i] != 0)
+                this.targetData[i] = data[i];
+        }
     }
 
     render() {
