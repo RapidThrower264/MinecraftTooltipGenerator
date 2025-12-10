@@ -194,9 +194,9 @@ class TextureManager {
 
         this.enchantCTX.globalCompositeOperation = "screen";
         this.enchantCTX.globalAlpha = 0.776;
-        // put the rotation code in here...
         this.enchantCTX.drawImage(this.enchantmentGlintImage, 0, 0, this.enchantGlintSize, this.enchantGlintSize, 0, 0, 1024, 1024);
 
+        this.enchantCTX.globalAlpha = 1;
         this.enchantCTX.globalCompositeOperation = "destination-in";
         this.enchantCTX.drawImage(canvas, x, y, size, size, 0, 0, this.enchantGlintSize, this.enchantGlintSize);
         return this.enchantCTX.getImageData(0, 0, this.enchantGlintSize, this.enchantGlintSize);
