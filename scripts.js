@@ -1172,7 +1172,7 @@ function selectItem(targetItem, tints) {
     let index = 0;
     if (targetItemModel == "player_head" || targetItemModel == "skull") {
         headRenderingSettings.classList.add("active");
-        if (tints[0])
+        if (tints && tints[0])
             setBase64SkinTexture(tints[0]);
     } else {
         headRenderingSettings.classList.remove("active");
