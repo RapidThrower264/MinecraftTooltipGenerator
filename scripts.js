@@ -1047,11 +1047,15 @@ function loadStats() {
     var statReminder = document.getElementById("stat-code-reminder");
     let createStatReminders = (statContainer, stats) => {
         stats.forEach(stat => {
-            let text = `${stat.icon} ${stat.stat}`;
             let charCode = String.fromCharCode(parseInt(stat.icon.replaceAll(/[&#x;]/gm, ""), 16));
             let statColor = REGISTERED_COLORS[stat.color];
-            let button = createButton("stat-reminder", text, statColor, () => {return `&${statColor.code}${charCode} ${stat.stat}`});
-            button.style.setProperty("--color", REGISTERED_COLORS[stat.color].color);
+            
+            let formatting = STAT_FORMATTING[stat?.parseType ?? "NORMAL"];
+            let formattingMap = {"%c": statColor.code, "%d": stat.subColor ? REGISTERED_COLORS[stat.subColor].code : undefined, "%i": charCode, "%s": stat.stat};
+            let insertText = formatting.replace(/%[cdis]/g, key => formattingMap[key]);
+            
+            let button = createButton("stat-reminder", `${stat.icon} ${stat.stat}`, statColor, () => {return insertText;});
+            button.style.setProperty("--color", statColor.color);
             statContainer.appendChild(button);
         });
     };
