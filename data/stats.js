@@ -7,7 +7,8 @@ const STAT_FORMATTING = {
     "SOULBOUND": "&%c&l* &%c%s &%c&l*",
     "POST_DUAL": "&%c%s &%d",
     "ABILITY": "&%c%s &%d&lRIGHT CLICK",
-    "RIFT_TRANSFERABLE": "&%c&kX&%c %s &%c&kX"
+    "RIFT_TRANSFERABLE": "&%c&kX&%c %s &%c&kX",
+    "GEMSTONE": "&8[&7%i&8]"
 };
 
 const STATS = [
@@ -117,6 +118,26 @@ const STATS = [
     {"icon":"&#x2618;","name":"fig_fortune","stat":"Fig Fortune","color":"GOLD"},
     {"icon":"&#x2618;","name":"mangrove_fortune","stat":"Mangrove Fortune","color":"GOLD"},
     {"icon":"&#x222E;","name":"sweep","stat":"Sweep","color":"DARK_GREEN"}
+]},
+{"name":"Gemstone Slots","stats":[
+    {"icon":"&#x2618;","name":"jade_gemstone_slot","stat":"Jade Gemstone Slot","color":"GREEN","parseType":"GEMSTONE"},
+    {"icon":"&#x2e15;","name":"amber_gemstone_slot","stat":"Amber Gemstone Slot","color":"GOLD","parseType":"GEMSTONE"},
+    {"icon":"&#x2727;","name":"topaz_gemstone_slot","stat":"Topaz Gemstone Slot","color":"YELLOW","parseType":"GEMSTONE"},
+    {"icon":"&#x270e;","name":"sapphire_gemstone_slot","stat":"Sapphire Gemstone Slot","color":"AQUA","parseType":"GEMSTONE"},
+    {"icon":"&#x2748;","name":"amethyst_gemstone_slot","stat":"Amethyst Gemstone Slot","color":"DARK_PURPLE","parseType":"GEMSTONE"},
+    {"icon":"&#x2741;","name":"jasper_gemstone_slot","stat":"Jasper Gemstone Slot","color":"LIGHT_PURPLE","parseType":"GEMSTONE"},
+    {"icon":"&#x2742;","name":"opal_gemstone_slot","stat":"Opal Gemstone Slot","color":"WHITE","parseType":"GEMSTONE"},
+    {"icon":"&#x2764;","name":"ruby_gemstone_slot","stat":"Ruby Gemstone Slot","color":"RED","parseType":"GEMSTONE"},
+    {"icon":"&#x2618;","name":"citrine_gemstone_slot","stat":"Citrine Gemstone Slot","color":"DARK_RED","parseType":"GEMSTONE"},
+    {"icon":"&#x2602;","name":"aquamarine_gemstone_slot","stat":"Aquamarine Gemstone Slot","color":"DARK_AQUA","parseType":"GEMSTONE"},
+    {"icon":"&#x2618;","name":"peridot_gemstone_slot","stat":"Peridot Gemstone Slot","color":"DARK_GREEN","parseType":"GEMSTONE"},
+    {"icon":"&#x2620;","name":"onyx_gemstone_slot","stat":"Onyx Gemstone Slot","color":"DARK_GRAY","parseType":"GEMSTONE"},
+    {"icon":"&#x2765;","name":"chisel_gemstone_slot","stat":"Chisel Gemstone Slot","color":"GOLD","parseType":"GEMSTONE"},
+    {"icon":"&#x2694;","name":"combat_gemstone_slot","stat":"Combat Gemstone Slot","color":"DARK_RED","parseType":"GEMSTONE"},
+    {"icon":"&#x2624;","name":"defensive_gemstone_slot","stat":"Defensive Gemstone Slot","color":"GREEN","parseType":"GEMSTONE"},
+    {"icon":"&#x2726;","name":"mining_gemstone_slot","stat":"Mining Gemstone Slot","color":"DARK_PURPLE","parseType":"GEMSTONE"},
+    {"icon":"&#x2742;","name":"universal_gemstone_slot","stat":"Universal Gemstone Slot","color":"WHITE","parseType":"GEMSTONE"},
+    {"icon":"&#x2620;","name":"offensive_gemstone_slot","stat":"Offensive Gemstone Slot","color":"BLUE","parseType":"GEMSTONE"}
 ]},
 {"name":"Item Formatting","stats":[
     {"icon":"&#x2763;","name":"requires","stat":"Requires","color":"DARK_RED","subColor":"RED","parseType":"DUAL_COLOR"},
