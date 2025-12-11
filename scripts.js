@@ -1045,37 +1045,36 @@ function loadColors() {
 
 function loadStats() {
     var statReminder = document.getElementById("stat-code-reminder");
-    var createCategory = (categoryName) => {
-        let category = document.createElement("div");
-        category.classList.add("stat-category");
-        statReminder.appendChild(category);
+    let createStatReminders = (statContainer, stats) => {
+        stats.forEach(stat => {
+            let charCode = String.fromCharCode(parseInt(stat.icon.replaceAll(/[&#x;]/gm, ""), 16));
+            let statColor = REGISTERED_COLORS[stat.color];
+            
+            let formatting = STAT_FORMATTING[stat?.parseType ?? "NORMAL"];
+            let formattingMap = {"%c": statColor.code, "%d": stat.subColor ? REGISTERED_COLORS[stat.subColor].code : undefined, "%i": charCode, "%s": stat.stat};
+            let insertText = formatting.replace(/%[cdis]/g, key => formattingMap[key]);
+            
+            let button = createButton("stat-reminder", `${stat.icon} ${stat.stat}`, statColor, () => {return insertText;});
+            button.style.setProperty("--color", statColor.color);
+            statContainer.appendChild(button);
+        });
+    };
+
+    STATS.forEach(category => {
+        let categorySection = document.createElement("div");
+        categorySection.classList.add("stat-category");
+        statReminder.appendChild(categorySection);
         
         let label = document.createElement("div");
-        label.innerHTML = categoryName;
+        label.innerHTML = category.name;
         label.classList.add("stat-category-label");
-        category.appendChild(label);
+        categorySection.appendChild(label);
 
-        let categoryContainer = document.createElement("div");
-        categoryContainer.classList.add("stat-category-container");
-        category.appendChild(categoryContainer);
+        let statContainer = document.createElement("div");
+        statContainer.classList.add("stat-category-container");
+        categorySection.appendChild(statContainer);
 
-        return categoryContainer;
-    }
-    
-    let categories = {};
-    STATS.forEach(stat => {
-        let text = `${stat.icon} ${stat.stat}`;
-        let charCode = String.fromCharCode(parseInt(stat.icon.replaceAll(/[&#x;]/gm, ""), 16));
-        var category = stat["category"] !== undefined ? stat.category : "Misc";
-        if (categories[category] === undefined) {
-            categories[category] = createCategory(category);
-        }
-        let statColor = REGISTERED_COLORS[stat.color];
-
-        let button = createButton("stat-reminder", text, statColor, () => {return `&${statColor.code}${charCode} ${stat.stat}`});
-        button.style.setProperty("--color", REGISTERED_COLORS[stat.color].color);
-
-        categories[category].appendChild(button);
+        label.addEventListener("click", () => createStatReminders(statContainer, category.stats), {once: true});
     });
 
     document.querySelectorAll(".stat-category").forEach(category => {
