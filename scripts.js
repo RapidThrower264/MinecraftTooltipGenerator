@@ -958,6 +958,8 @@ const OBFUSCATED_CHARACTER_REPLACEMENT = [
     "Wqß1#BGN§R4PLDMZdÞ¥Fx7S0p¿8/OzKwJh2¬CgØð9n¢µþ?s±Lc^VAQuUe=%×5T¯+H£m&r_Eo\\avYbX-3jøy6÷$"
 ];
 
+const BOUND_CONTROL_KEYS = {"b": BOLD.code, "i": ITALIC.code, "u": UNDERLINE.code};
+
 const REGISTERED_CODES = [];
 const COLORS = [BLACK, DARK_BLUE, DARK_GREEN, DARK_AQUA, DARK_RED, DARK_PURPLE, GOLD, GRAY, DARK_GRAY, BLUE, GREEN, AQUA, RED, LIGHT_PURPLE, YELLOW, WHITE];
 const COLOR_CODES = {};
@@ -1306,6 +1308,12 @@ window.addEventListener("load", async (event) => {
     });
 
     textarea.value = RANDOM_INTROS[Math.floor(Math.random() * RANDOM_INTROS.length)];
+    textarea.addEventListener("keydown", (event) => {
+        if (event.ctrlKey && BOUND_CONTROL_KEYS[event.key.toLowerCase()]) {
+            event.preventDefault();
+            document.execCommand("insertText", false, "&" + BOUND_CONTROL_KEYS[event.key.toLowerCase()]);
+        }
+    });
 
     loadColors();
     loadStats();
