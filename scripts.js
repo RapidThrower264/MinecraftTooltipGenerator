@@ -1423,15 +1423,15 @@ window.addEventListener("load", async (event) => {
         recyclerElements[0].classList.remove("hidden");
 
         searchBar.addEventListener("keydown", (event) => {
-            if (event.code == "ArrowDown") {
+            if (event.key == "ArrowDown") {
                 event.preventDefault();
                 onArrowDirection(1)
             }
-            else if (event.code == "ArrowUp") {
+            else if (event.key == "ArrowUp") {
                 event.preventDefault();
                 onArrowDirection(-1);
             }
-            else if (event.code == "Enter") {
+            else if (event.key == "Enter") {
                 if (activeElements == 1)
                     selectedIndex = 1;
                 else if (selectedIndex < 0)
