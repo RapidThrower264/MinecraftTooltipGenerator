@@ -574,10 +574,8 @@ class TextManager {
                 stopIndex = !currentMatch.done ? currentMatch.value.index : currentText.length;
                 currentSection = currentText.substring(currentIndex, stopIndex);
 
-                if (currentSection.length == 0) {
-                    continue;
-                }
-                else if (currentSection.length > 8 && currentSection.startsWith("&#")) {
+                if (currentSection.length == 0) continue;
+                else if (currentSection.length >= 8 && currentSection.startsWith("&#")) {
                     let hexCandidate = currentSection.substring(1, 8);
                     if (/^#[0-9a-fA-F]{6}$/.test(hexCandidate)) {
                         styles = DEFAULT_STYLES.slice();
