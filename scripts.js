@@ -789,6 +789,8 @@ class Settings {
         // editor settings
         this._updatePeriod = new Callback(2);
         this._imageScale = new Callback(window.innerWidth < 480 ? 1.5 : 2);
+        // stats settings
+        this._insertIconOnly = new Callback(false);
         
         this._settingBindings = {
             "first-line-gap": this._firstLineGap,
@@ -800,7 +802,8 @@ class Settings {
             "apply-enchant-glint": this._applyEnchantGlint,
             "display-item-size": this._displayItemSize,
             "item-tint-layer-1": this._itemTintLayer1,
-            "item-tint-layer-2": this._itemTintLayer2
+            "item-tint-layer-2": this._itemTintLayer2,
+            "insert-icon-only": this._insertIconOnly
         }
     }
 
@@ -842,6 +845,10 @@ class Settings {
 
     get itemTintLayer2() {
         return this._itemTintLayer2.value;
+    }
+
+    get insertIconOnly() {
+        return this._insertIconOnly.value;
     }
 
     getSetting(setting) {
@@ -1010,15 +1017,15 @@ let showDisplayItemInput, itemSearchBar, tintColorSelectors;
 let toastContainer, toastTemplate;
 
 
-function createButton(reminderClass, buttonText, color, textInsert) {
+function createButton(reminderClass, buttonText, color, textInsert, specialTextInsert) {
     var reminder = document.createElement("button");
     reminder.classList.add(reminderClass);
     reminder.innerHTML = buttonText;
     reminder.style.setProperty("--btn-color", color);
 
     reminder.addEventListener("click", (event) => {
-        textarea.focus()
-        document.execCommand("insertText", false, textInsert());
+        textarea.focus();
+        document.execCommand("insertText", false, (specialTextInsert && event.shiftKey) ? specialTextInsert() : textInsert());
     });
     return reminder;
 }
@@ -1051,8 +1058,9 @@ function loadStats() {
             let formatting = STAT_FORMATTING[stat?.parseType ?? "NORMAL"];
             let formattingMap = {"%c": statColor.code, "%d": stat.subColor ? REGISTERED_COLORS[stat.subColor].code : undefined, "%i": charCode, "%s": stat.stat};
             let insertText = formatting.replace(/%[cdis]/g, key => formattingMap[key]);
+            let insertIcon = "&" + statColor.code + charCode;
             
-            let button = createButton("stat-reminder", `${stat.icon} ${stat.stat}`, statColor, () => {return insertText;});
+            let button = createButton("stat-reminder", `${stat.icon} ${stat.stat}`, statColor, () => {return settings.insertIconOnly ? insertIcon : insertText}, () => {return insertIcon});
             button.style.setProperty("--color", statColor.color);
             statContainer.appendChild(button);
         });
