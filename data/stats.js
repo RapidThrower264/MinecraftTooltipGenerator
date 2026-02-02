@@ -8,7 +8,7 @@ const STAT_FORMATTING = {
     "POST_DUAL": "&%c%s &%d",
     "ABILITY": "&%c%s &%d&lRIGHT CLICK",
     "RIFT_TRANSFERABLE": "&%c&kX&%c %s &%c&kX",
-    "GEMSTONE": "&8[%i]"
+    "GEMSTONE": "&8[%i&8]"
 };
 
 const STATS = [
