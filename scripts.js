@@ -565,7 +565,7 @@ class TextManager {
             let currentLine = new Line(currentColor, styles);
             let currentIndex = 0;
             let stopIndex = 0;
-            let regex = currentText.matchAll(/&/g);
+            let regex = currentText.matchAll(/&|§/g);
             let currentSection, currentMatch;
 
             while (currentIndex < currentText.length) {
@@ -575,7 +575,7 @@ class TextManager {
                 currentSection = currentText.substring(currentIndex, stopIndex);
 
                 if (currentSection.length == 0) continue;
-                else if (currentSection.length >= 8 && currentSection.startsWith("&#")) {
+                else if (currentSection.length >= 8 && (currentSection.startsWith("&#") || currentSection.startsWith("§#"))) {
                     let hexCandidate = currentSection.substring(1, 8);
                     if (/^#[0-9a-fA-F]{6}$/.test(hexCandidate)) {
                         styles = DEFAULT_STYLES.slice();
@@ -585,7 +585,7 @@ class TextManager {
                         currentLine.segments[currentLine.length - 1].add(currentSection);
                     }
                 }
-                else if (currentSection.length == 1 || currentSection.charAt(0) != "&" || !(REGISTERED_CODES.includes(currentSection.charAt(1)))) {
+                else if (currentSection.length == 1 || (currentSection.charAt(0) != "&" && currentSection.charAt(0) != "§") || !(REGISTERED_CODES.includes(currentSection.charAt(1)))) {
                     currentLine.segments[currentLine.length - 1].add(currentSection);
                 }
                 else {
