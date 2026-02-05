@@ -1,14 +1,14 @@
-// %c = color, %d = subColor, %i = icon, %s = stat
+// %c = color, %d = subColor, %f = formatting prefix, %i = icon, %s = stat
 const STAT_FORMATTING = {
-    "NORMAL": "&%c%i %s",
-    "BOLD_ICON": "&%c&l%i &%c%s",
-    "DUAL_COLOR": "&%c%i &%d%s",
-    "NONE": "&%c%s",
-    "SOULBOUND": "&%c&l* &%c%s &%c&l*",
-    "POST_DUAL": "&%c%s &%d",
-    "ABILITY": "&%c%s &%d&lRIGHT CLICK",
-    "RIFT_TRANSFERABLE": "&%c&kX&%c %s &%c&kX",
-    "GEMSTONE": "&8[%i]"
+    "NORMAL": "%f%c%i %s",
+    "BOLD_ICON": "%f%c%fl%i %f%c%s",
+    "DUAL_COLOR": "%f%c%i %f%d%s",
+    "NONE": "%f%c%s",
+    "SOULBOUND": "%f%c%fl* %f%c%s %f%c%fl*",
+    "POST_DUAL": "%f%c%s %f%d",
+    "ABILITY": "%f%c%s %f%d%flRIGHT CLICK",
+    "RIFT_TRANSFERABLE": "%f%c%fkX%f%c %s %f%c%fkX",
+    "GEMSTONE": "%f8[%i%f8]"
 };
 
 const STATS = [

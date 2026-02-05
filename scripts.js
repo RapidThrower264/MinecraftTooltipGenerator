@@ -791,6 +791,7 @@ class Settings {
         this._imageScale = new Callback(window.innerWidth < 480 ? 1.5 : 2);
         // stats settings
         this._insertIconOnly = new Callback(false);
+        this._preferSectionSymbol = new Callback(false);
         
         this._settingBindings = {
             "first-line-gap": this._firstLineGap,
@@ -803,7 +804,8 @@ class Settings {
             "display-item-size": this._displayItemSize,
             "item-tint-layer-1": this._itemTintLayer1,
             "item-tint-layer-2": this._itemTintLayer2,
-            "insert-icon-only": this._insertIconOnly
+            "insert-icon-only": this._insertIconOnly,
+            "prefer-section-symbol": this._preferSectionSymbol,
         }
     }
 
@@ -849,6 +851,10 @@ class Settings {
 
     get insertIconOnly() {
         return this._insertIconOnly.value;
+    }
+
+    get preferSectionSymbol() {
+        return this._preferSectionSymbol.value;
     }
 
     getSetting(setting) {
@@ -1054,13 +1060,18 @@ function loadStats() {
         stats.forEach(stat => {
             let charCode = String.fromCharCode(parseInt(stat.icon.replaceAll(/[&#x;]/gm, ""), 16));
             let statColor = REGISTERED_COLORS[stat.color];
-            
-            let formatting = STAT_FORMATTING[stat?.parseType ?? "NORMAL"];
-            let formattingMap = {"%c": statColor.code, "%d": stat.subColor ? REGISTERED_COLORS[stat.subColor].code : undefined, "%i": charCode, "%s": stat.stat};
-            let insertText = formatting.replace(/%[cdis]/g, key => formattingMap[key]);
-            let insertIcon = "&" + statColor.code + charCode;
-            
-            let button = createButton("stat-reminder", `${stat.icon} ${stat.stat}`, statColor, () => {return settings.insertIconOnly ? insertIcon : insertText}, () => {return insertIcon});
+            let button = createButton("stat-reminder", `${stat.icon} ${stat.stat}`, statColor, () => {
+                let insertText;
+                let formatCode = settings.preferSectionSymbol ? "§" : "&";
+                if (settings.insertIconOnly) {
+                    insertText = formatCode + statColor.code + charCode
+                } else {
+                    let formatting = STAT_FORMATTING[stat?.parseType ?? "NORMAL"];
+                    let formattingMap = {"%c": statColor.code, "%d": stat.subColor ? REGISTERED_COLORS[stat.subColor].code : undefined, "%f":  formatCode, "%i": charCode, "%s": stat.stat};
+                    insertText = formatting.replace(/%[cdfis]/g, key => formattingMap[key])
+                }
+                return insertText;
+            }, () => (settings.preferSectionSymbol ? "§" : "&") + statColor.code + charCode);
             button.style.setProperty("--color", statColor.color);
             statContainer.appendChild(button);
         });
