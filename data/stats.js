@@ -1,14 +1,14 @@
-// %c = color, %d = subColor, %i = icon, %s = stat
+// %c = color, %d = subColor, %f = formatting prefix, %i = icon, %s = stat
 const STAT_FORMATTING = {
-    "NORMAL": "&%c%i %s",
-    "BOLD_ICON": "&%c&l%i &%c%s",
-    "DUAL_COLOR": "&%c%i &%d%s",
-    "NONE": "&%c%s",
-    "SOULBOUND": "&%c&l* &%c%s &%c&l*",
-    "POST_DUAL": "&%c%s &%d",
-    "ABILITY": "&%c%s &%d&lRIGHT CLICK",
-    "RIFT_TRANSFERABLE": "&%c&kX&%c %s &%c&kX",
-    "GEMSTONE": "&8[%i&8]"
+    "NORMAL": "%f%c%i %s",
+    "BOLD_ICON": "%f%c%fl%i %f%c%s",
+    "DUAL_COLOR": "%f%c%i %f%d%s",
+    "NONE": "%f%c%s",
+    "SOULBOUND": "%f%c%fl* %f%c%s %f%c%fl*",
+    "POST_DUAL": "%f%c%s %f%d",
+    "ABILITY": "%f%c%s %f%d%flRIGHT CLICK",
+    "RIFT_TRANSFERABLE": "%f%c%fkX%f%c %s %f%c%fkX",
+    "GEMSTONE": "%f8[%i%f8]"
 };
 
 const STATS = [
@@ -33,12 +33,13 @@ const STATS = [
     {"icon":"&#x2726;","name":"speed","stat":"Speed","color":"WHITE","subColor":"GREEN"},
     {"icon":"&#x272F;","name":"magic_find","stat":"Magic Find","color":"AQUA"},
     {"icon":"&#x2663;","name":"pet_luck","stat":"Pet Luck","color":"LIGHT_PURPLE","subColor":"WHITE"},
+    {"icon":"&#x2743", "name":"tracking","stat":"Tracking","color":"LIGHT_PURPLE"},
     {"icon":"&#x444;","name":"rift_time","stat":"Rift Time","color":"GREEN"},
     {"icon":"&#x2741;","name":"rift_damage","stat":"Rift Damage","color":"DARK_PURPLE"},
     {"icon":"&#x2618;","name":"global_fortune","stat":"Global Fortune","color":"GOLD"},
     {"icon":"&#x2620;","name":"fear","stat":"Fear","color":"DARK_PURPLE"},
     {"icon":"&#x2618;","name":"syphon_luck","stat":"Syphon Luck","color":"LIGHT_PURPLE"},
-    {"icon":"&#x2618;","name":"Hunter_fortune","stat":"Hunter Fortune","color":"LIGHT_PURPLE"}
+    {"icon":"&#x2618;","name":"hunter_fortune","stat":"Hunter Fortune","color":"LIGHT_PURPLE"}
 ]},
 {"name":"Mana & Abilities","stats":[
     {"icon":"&#x270E;","name":"intelligence","stat":"Intelligence","color":"AQUA"},
