@@ -33,12 +33,13 @@ const STATS = [
     {"icon":"&#x2726;","name":"speed","stat":"Speed","color":"WHITE","subColor":"GREEN"},
     {"icon":"&#x272F;","name":"magic_find","stat":"Magic Find","color":"AQUA"},
     {"icon":"&#x2663;","name":"pet_luck","stat":"Pet Luck","color":"LIGHT_PURPLE","subColor":"WHITE"},
+    {"icon":"&#x2743", "name":"tracking","stat":"Tracking","color":"LIGHT_PURPLE"},
     {"icon":"&#x444;","name":"rift_time","stat":"Rift Time","color":"GREEN"},
     {"icon":"&#x2741;","name":"rift_damage","stat":"Rift Damage","color":"DARK_PURPLE"},
     {"icon":"&#x2618;","name":"global_fortune","stat":"Global Fortune","color":"GOLD"},
     {"icon":"&#x2620;","name":"fear","stat":"Fear","color":"DARK_PURPLE"},
     {"icon":"&#x2618;","name":"syphon_luck","stat":"Syphon Luck","color":"LIGHT_PURPLE"},
-    {"icon":"&#x2618;","name":"Hunter_fortune","stat":"Hunter Fortune","color":"LIGHT_PURPLE"}
+    {"icon":"&#x2618;","name":"hunter_fortune","stat":"Hunter Fortune","color":"LIGHT_PURPLE"}
 ]},
 {"name":"Mana & Abilities","stats":[
     {"icon":"&#x270E;","name":"intelligence","stat":"Intelligence","color":"AQUA"},
