@@ -247,7 +247,7 @@ class TextGenerator {
         let glyphPage = undefined;
 
         // draw each character into the buffer
-        var lineWidth = 0;
+        let lineWidth = (styles.isStrikethrough && text.length > 0) ? dpi : 0;
         for (var i = 0; i < text.length; i++) {
             var characterCode = text.codePointAt(i);
             let unicode = ("0000" + characterCode.toString(16)).slice(-4);
@@ -318,16 +318,17 @@ class TextGenerator {
     }
 
     renderText(text, x, y, styles, target=null) {
-        if (target == null) {
+        if (text.length == 0)
+            return 0;
+        if (target == null)
             target = this.ctx;
-        }
 
         if (styles.isObfuscated) {
             text = this.randomizeText(text.length);
         }
 
         let lineWidth = this.drawText(text, x, styles);
-        var fontOffsets = styles.isItalic ? -1 : 0 + styles.isStrikethrough ? -dpi : 0;
+        let fontOffsets = styles.isItalic ? -1 : 0 + styles.isStrikethrough ? -dpi : 0;
         
         // draw the drop shadow for the text
         this.tctx.globalCompositeOperation = "source-in";
@@ -355,9 +356,10 @@ class TextGenerator {
         this.tctx.globalCompositeOperation = "source-over";
         this.tctx.clearRect(0, 0, lineWidth, 18);
 
-        if (styles.isItalic) {
+        if (styles.isItalic)
             lineWidth -= 2;
-        }
+        if (styles.isStrikethrough)
+            lineWidth -= dpi;
 
         return lineWidth;
     }
