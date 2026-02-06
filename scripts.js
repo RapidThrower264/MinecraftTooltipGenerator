@@ -493,12 +493,11 @@ class TextGenerator {
     }
 }
 
-class MCColor {
-    constructor(code, name, color, dropShadow) {
+class MCStyle {
+    constructor(code, name, isColor) {
         this.code = code;
         this.name = name;
-        this.color = color;
-        this.dropShadow = dropShadow;
+        this.isColor = isColor;
     }
 
     toString() {
@@ -506,17 +505,20 @@ class MCColor {
     }
 }
 
-class MCCode {
+class MCColor extends MCStyle {
+    constructor(code, name, color, dropShadow) {
+        super(code, name, true);
+        this.color = color;
+        this.dropShadow = dropShadow;
+    }
+}
+
+class MCCode extends MCStyle {
     constructor(code, name, shorthand, style) {
-        this.code = code;
-        this.name = name;
+        super(code, name, false);
         this.shorthand = shorthand;
         this.styleIndex = 0;
         this.style = style;
-    }
-
-    toString() {
-        return this.name;
     }
 }
 
@@ -585,37 +587,32 @@ class TextManager {
                         currentLine.segments[currentLine.length - 1].add(currentSection);
                     }
                 }
-                else if (currentSection.length == 1 || (currentSection.charAt(0) != "&" && currentSection.charAt(0) != "§") || !(REGISTERED_CODES.includes(currentSection.charAt(1)))) {
+                else if (currentSection.length == 1 || (currentSection.charAt(0) != "&" && currentSection.charAt(0) != "§") || !(currentSection.charAt(1) in REGISTERED_STYLES)) {
                     currentLine.segments[currentLine.length - 1].add(currentSection);
                 }
                 else {
                     let character = currentSection.charAt(1);
-                    if (character in COLOR_CODES) {
+                    let style = REGISTERED_STYLES[character];
+                    let targetSegment = currentLine.segments[currentLine.length - 1];
+                    if (targetSegment.length > 0 || style.code == "r") {
+                        targetSegment = new LineSegment("", currentColor, styles);
+                        currentLine.add(targetSegment);
+                    }
+
+                    if (style.isColor) {
                         styles = DEFAULT_STYLES.slice();
-                        currentColor = COLOR_CODES[character];
-                        currentLine.add(new LineSegment(currentSection.substring(2), currentColor, styles));
+                        currentColor = style;
                     }
-                    else {
-                        var targetSegment = currentLine.segments[currentLine.length - 1];
-                        let style = STYLE_CODES[character];
-
-                        if (targetSegment.length > 0) {
-                            targetSegment = new LineSegment("", currentColor, styles);
-                            currentLine.add(targetSegment);
-                        }
-
-                        if (style.code == "r") {
-                            currentColor = DEFAULT_COLOR;
-                            targetSegment.setColor(currentColor);
-                            styles = DEFAULT_STYLES;
-                        }
-                        else {
-                            styles[style.styleIndex] = true;
-                        }
-
-                        targetSegment.setStyles(styles);
-                        targetSegment.add(currentSection.substring(2));
+                    else if (style.code == "r") {
+                        styles = DEFAULT_STYLES.slice();
+                        currentColor = DEFAULT_COLOR;
                     }
+                    else
+                        styles[style.styleIndex] = true;
+
+                    targetSegment.add(currentSection.substring(2));
+                    targetSegment.setStyles(styles);
+                    targetSegment.setColor(currentColor);
                 }
                 
                 currentIndex = stopIndex;
@@ -971,24 +968,18 @@ const OBFUSCATED_CHARACTER_REPLACEMENT = [
 
 const BOUND_CONTROL_KEYS = {"b": BOLD.code, "i": ITALIC.code, "u": UNDERLINE.code};
 
-const REGISTERED_CODES = [];
+const REGISTERED_STYLES = {};
 const COLORS = [BLACK, DARK_BLUE, DARK_GREEN, DARK_AQUA, DARK_RED, DARK_PURPLE, GOLD, GRAY, DARK_GRAY, BLUE, GREEN, AQUA, RED, LIGHT_PURPLE, YELLOW, WHITE];
-const COLOR_CODES = {};
 const REGISTERED_COLORS = {};
 COLORS.forEach(color => {
-    COLOR_CODES[color.code] = color;
     REGISTERED_COLORS[color.name] = color;
-    REGISTERED_CODES.push(color.code);
+    REGISTERED_STYLES[color.code] = color;
 });
 
 const STYLES = [BOLD, STRIKETHROUGH, UNDERLINE, ITALIC, OBFUSCATED, RESET];
-const STYLE_CODES = {};
-const REGISTERED_STYLES = {};
 STYLES.forEach((style, index) => {
     style.styleIndex = index;
-    STYLE_CODES[style.code] = style;
-    REGISTERED_STYLES[style.name] = style;
-    REGISTERED_CODES.push(style.code);
+    REGISTERED_STYLES[style.code] = style;
 });
 
 var DEFAULT_COLOR = GRAY;
