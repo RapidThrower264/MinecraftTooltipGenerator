@@ -13,7 +13,7 @@ const TEMPLATES = [
     },
     {
         "name": "Pet",
-        "description": "&8[Lvl 100] {rarity_color}Pet Name\n&8<Skill Type> Pet\n\n&6Pet Pal\n&7Just follows you around.\n\n&b&lMAX LEVEL\n&8{symbol} 25,353,230 XP",
+        "description": "&7[Lvl 100] {rarity_color}Pet Name\n&8<Skill Type> Pet\n\n&6Pet Pal\n&7Just follows you around.\n\n&b&lMAX LEVEL\n&8{symbol} 25,353,230 XP",
         "special": {"symbol": () => convertFromHTMLEntity("&#x25B8;")}
     },
     {
