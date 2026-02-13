@@ -1110,21 +1110,18 @@ function loadTemplates() {
 
     let templateContainer = document.getElementById("template-code-reminder");
     TEMPLATES.forEach(template => {
-        if ("symbol" in template) {
-            template.symbol = String.fromCharCode(parseInt(template.symbol.replaceAll(/[&#x;]/gm, ""), 16));
-        }
-
         let button = createButton("template-reminder", template.name, "#fff", () => {
             let insertText = template.description;
-            var rarity = RARITIES[document.getElementById("template-item-rarity").value];
+            let rarity = RARITIES[document.getElementById("template-item-rarity").value];
             let replacements = {
                 "{rarity}": rarity.name,
                 "{rarity_color}": "&" + rarity.color.code,
-                "{symbol}": template.symbol != undefined ? template.symbol : ""
             }
-            Object.entries(replacements).forEach(entry => {
-                insertText = insertText.replaceAll(entry[0], entry[1]);
-            });
+
+            if (template["special"])
+                Object.entries(template["special"]).forEach(entry => replacements[`{${entry[0]}}`] = entry[1](rarity));
+            
+            Object.entries(replacements).forEach(entry => insertText = insertText.replaceAll(entry[0], entry[1]));
             return insertText;
         });
         templateContainer.appendChild(button);
