@@ -356,7 +356,7 @@ main {
     flex-direction: column;
 }
 
-.setting-hint .hint {
+.hint {
     color: #777;
     font-style: italic;
     font-size: 0.75em;
@@ -444,6 +444,11 @@ input[type="range"]::-moz-range-thumb {
     border-radius: 2em;
     height: 1.6em;
     width: 1.6em;
+}
+
+input[type="file"] {
+    overflow: hidden;
+    max-width: 220px;
 }
 
 .range-display {

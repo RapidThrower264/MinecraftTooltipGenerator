@@ -20,7 +20,7 @@ class MinecraftGenerator {
 
         this.textRenderer = new TextGenerator(this.settings);
         this.textRenderer.setText(textarea.value);
-        this.blockRenderer = new BlockRenderingEngine(512, 512, document.getElementById("target-image"), document.getElementById("skin-image"), document.getElementById("enchantment-glint-image"));
+        this.blockRenderer = new BlockRenderingEngine(512, 512, document.getElementById("target-image"), document.getElementById("skin-image"), document.getElementById("custom-texture-image"), document.getElementById("enchantment-glint-image"));
         this.canvasWrapper.appendChild(this.textRenderer.canvas);
 
         this.textCanvas = this.textRenderer.canvas;
@@ -1110,21 +1110,18 @@ function loadTemplates() {
 
     let templateContainer = document.getElementById("template-code-reminder");
     TEMPLATES.forEach(template => {
-        if ("symbol" in template) {
-            template.symbol = String.fromCharCode(parseInt(template.symbol.replaceAll(/[&#x;]/gm, ""), 16));
-        }
-
         let button = createButton("template-reminder", template.name, "#fff", () => {
             let insertText = template.description;
-            var rarity = RARITIES[document.getElementById("template-item-rarity").value];
+            let rarity = RARITIES[document.getElementById("template-item-rarity").value];
             let replacements = {
                 "{rarity}": rarity.name,
                 "{rarity_color}": "&" + rarity.color.code,
-                "{symbol}": template.symbol != undefined ? template.symbol : ""
             }
-            Object.entries(replacements).forEach(entry => {
-                insertText = insertText.replaceAll(entry[0], entry[1]);
-            });
+
+            if (template["special"])
+                Object.entries(template["special"]).forEach(entry => replacements[`{${entry[0]}}`] = entry[1](rarity));
+            
+            Object.entries(replacements).forEach(entry => insertText = insertText.replaceAll(entry[0], entry[1]));
             return insertText;
         });
         templateContainer.appendChild(button);
@@ -1180,17 +1177,24 @@ function selectItem(targetItem, tints) {
     document.activeElement.blur();
 
     let headRenderingSettings = document.getElementById("head-generator-settings");
+    let customItemTexture = document.getElementById("custom-display-settings");
     let enchantGlintOption = document.getElementById("apply-enchant-setting");
 
     let index = 0;
     if (targetItemModel == "player_head" || targetItemModel == "skull") {
         headRenderingSettings.classList.add("active");
         enchantGlintOption.classList.remove("active");
+        customItemTexture.classList.remove("active");
         if (tints && tints[0])
             setBase64SkinTexture(tints[0]);
+    } else if (targetItemModel == "custom") {
+        headRenderingSettings.classList.remove("active");
+        enchantGlintOption.classList.add("active");
+        customItemTexture.classList.add("active");
     } else {
         headRenderingSettings.classList.remove("active");
         enchantGlintOption.classList.add("active");
+        customItemTexture.classList.remove("active");
 
         let foundTints = modelInformation[targetItemModel]?.tints ?? [];
         let tints = [];
@@ -1578,6 +1582,15 @@ window.addEventListener("load", async (event) => {
     document.getElementById("skin-base64-input").addEventListener("change", (event) => {
         setBase64SkinTexture(event.target.value);
     });
+    document.getElementById("custom-item-display-input").addEventListener("change", (event) => {
+        if (event.target.files.length < 1) {
+            const errorData = createDebugInformation("fileLoading", `Selected ${event.target.files.length} files.`);
+            createToast("error", `Please select an image!`, "It seems like you haven't selected an image to upload to the renderer.", "Click me to copy relevant debug data to your clipboard", errorData);
+            return;
+        }
+        
+        canvas.blockRenderer.setCustomItemTexture(URL.createObjectURL(event.target.files[0]))
+    })
     
     await canvas.redrawImage();
 });

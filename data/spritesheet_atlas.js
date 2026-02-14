@@ -1207,4 +1207,5 @@ let spritesheet = {
     hat_back: {x: 56, y: 8, skin: true},
     hat_top: {x: 40, y: 0, skin: true},
     hat_bottom: {x: 48, y: 0, skin: true},
+    custom: {custom: true}
 };

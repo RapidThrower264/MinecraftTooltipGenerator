@@ -109,7 +109,7 @@ class Texture {
 
 class TextureManager {
     // Manages the textures and models for the renderer
-    constructor(spritesheetImage, skinImage, enchantmentGlintImage) {
+    constructor(spritesheetImage, skinImage, customTextureImage, enchantmentGlintImage) {
         this.targetImage = spritesheetImage;
         this.width = this.targetImage.width;
         this.height = this.targetImage.height;
@@ -129,6 +129,21 @@ class TextureManager {
             this.skinCTX.drawImage(this.skinImage, 0, 0);
         });
         this.skinCTX.drawImage(this.skinImage, 0, 0);
+
+        this.customCanvas = document.createElement("canvas");
+        this.customCTX = this.customCanvas.getContext("2d", {"willReadFrequently": true});
+        this.customTexture = customTextureImage;
+        this.customTexture.addEventListener("load", () => {
+            // drawing the image so that it is a square
+            let size = Math.max(this.customTexture.naturalWidth, this.customTexture.naturalHeight);
+            let xCenterOffset = Math.floor(size / 2 - this.customTexture.naturalWidth / 2);
+            let yCenterOffset = Math.floor(size / 2 - this.customTexture.naturalHeight / 2);
+            this.customCanvas.width = size;
+            this.customCanvas.height = size;
+            
+            this.customCTX.drawImage(this.customTexture, xCenterOffset, yCenterOffset);
+        });
+        this.customTexture.dispatchEvent(new Event("load"));
 
         this.enchantGlintCanvas = document.createElement("canvas");
         this.enchantGlintSize = 128;
@@ -187,6 +202,10 @@ class TextureManager {
         return new Texture("", texture.x, texture.y, textureSize, textureSize, imageData, tint);
     }
 
+    getCustomTexture(tint) {
+        return new Texture("", 0, 0, this.customCanvas.width, this.customCanvas.height, this.customCTX.getImageData(0, 0, this.customCanvas.width, this.customCanvas.height).data, tint);
+    }
+
     applyEnchantLayer(canvas, x, y, size) {
         this.enchantCTX.globalCompositeOperation = "source-over";
         this.enchantCTX.globalAlpha = 1;
@@ -205,6 +224,10 @@ class TextureManager {
     setObjectURL(objectURL) {
         this.skinImage.src = objectURL;
     }
+
+    setCustomTextureURL(objectURL) {
+        this.customTexture.src = objectURL;
+    }
 }
 
 class BlockRenderingEngine {
@@ -218,7 +241,7 @@ class BlockRenderingEngine {
         [4, 7, 0, 3, "down", 0, 2]
     ]
 
-    constructor(width, height, spritesheetImage, skinImage, enchantmentGlintImage) {
+    constructor(width, height, spritesheetImage, skinImage, customTextureImage, enchantmentGlintImage) {
         this.canvas = document.createElement("canvas");
         this.ctx = this.canvas.getContext("2d", {"willReadFrequently": true});
         this.defaultWidth = width;
@@ -229,9 +252,11 @@ class BlockRenderingEngine {
         this.isValid = false;
         this.data = null;
         this.zBuffer = null;
-        this.textureManager = new TextureManager(spritesheetImage, skinImage, enchantmentGlintImage);
+        this.textureManager = new TextureManager(spritesheetImage, skinImage, customTextureImage, enchantmentGlintImage);
         skinImage.addEventListener("load", () => this.isValid = false);
         skinImage.crossOrigin = "Anonymous";
+        customTextureImage.addEventListener("load", () => this.isValid = false);
+        customTextureImage.crossOrigin = "Anonymous";
 
         this.modelName = null;
         this.tint = [];
@@ -396,18 +421,19 @@ class BlockRenderingEngine {
         this.ctx.clearRect(0, 0, this.width, this.height);
 
         let model = this.textureManager.getModel(this.modelName);
-        if (model["elements"]) {
-            this.setSize(this.defaultWidth, this.defaultHeight);
+        if (this.modelName == "custom")
+            this.renderImage(this.tint[0], this.isEnchanted);
+        else if (model["elements"])
             this.renderBlock(model, this.tint, this.isEnchanted);
-        } else {
-            this.setSize(16, 16);
+        else
             this.renderGenerated(model, this.tint, this.isEnchanted);
-        }
 
         this.isValid = true;
     }
 
     renderBlock(model, tints, isEnchanted) {
+        this.setSize(this.defaultWidth, this.defaultHeight);
+
         // renders a block to the screen
         this.zBuffer = new Float64Array(this.width * this.height).fill(-653000);
         let imageData = this.ctx.getImageData(0, 0, this.width, this.height);
@@ -457,6 +483,7 @@ class BlockRenderingEngine {
     }
 
     renderGenerated(model, tints, isEnchanted) {
+        this.setSize(16, 16);
         this.targetData = new Uint8ClampedArray(4 * this.width * this.height);
 
         // renders an item to the screen.
@@ -468,6 +495,23 @@ class BlockRenderingEngine {
             this.drawImage(this.textureManager.getTexture(layers[layer], tint));
         }
         this.ctx.putImageData(new ImageData(this.targetData, this.width, this.height), 0, 0);     
+
+        if (isEnchanted) {
+            let imageData = this.textureManager.applyEnchantLayer(this.canvas, 0, 0, this.width);
+            this.setSize(imageData.width, imageData.height);
+            this.ctx.putImageData(imageData, 0, 0);
+        }
+    }
+
+    renderImage(tint, isEnchanted) {
+        let texture = this.textureManager.getCustomTexture(tint);
+
+        this.setSize(texture.width, texture.height);
+        this.targetData = new Uint8ClampedArray(4 * this.width * this.height);
+
+        // renders an item to the screen.
+        this.drawImage(texture);
+        this.ctx.putImageData(new ImageData(this.targetData, this.width, this.height), 0, 0);
 
         if (isEnchanted) {
             let imageData = this.textureManager.applyEnchantLayer(this.canvas, 0, 0, this.width);
@@ -498,6 +542,11 @@ class BlockRenderingEngine {
     setSkinTexture(objectURL) {
         this.textureManager.setObjectURL(objectURL);
         this.isValid = false;
+    }
+
+    setCustomItemTexture(objectURL) {
+        this.textureManager.setCustomTextureURL(objectURL);
+        this.model = "custom";
     }
 
     setEnchanted(isEnchanted) {
