@@ -356,7 +356,7 @@ main {
     flex-direction: column;
 }
 
-.setting-hint .hint {
+.hint {
     color: #777;
     font-style: italic;
     font-size: 0.75em;
