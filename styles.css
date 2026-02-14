@@ -446,6 +446,11 @@ input[type="range"]::-moz-range-thumb {
     width: 1.6em;
 }
 
+input[type="file"] {
+    overflow: hidden;
+    max-width: 220px;
+}
+
 .range-display {
     text-align: center;
 }
