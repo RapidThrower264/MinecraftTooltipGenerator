@@ -139,8 +139,15 @@
                                             <li><a href="https://minecraft-heads.com/" target="_blank">Minecraft Heads</a>: Filled with crafted Player heads from talented individuals</li>
                                             <li><a href="https://wiki.hypixel.net/" target="_blank">Hypixel Skyblock Wiki</a>: Items listed on the Wiki typically have an Attribute for "Texture"</li>
                                         </ul>
-                                    </div>  
-                                </div>                            
+                                    </div>
+                                </div>
+                                <div id="custom-display-settings" class="setting-section toggleable">
+                                    <div class="setting-container">
+                                        <span>Custom File</span>
+                                        <input type="file" id="custom-item-display-input" accept="image/*">
+                                    </div>
+                                    <p class="hint">Known Supported Formats: .png, .jpeg, .webp, .svg, .gif. Others formats may work.</p>
+                                </div>
                             </div>
                             <br>
                             <p class="note">Note: This feature is still in development. There are some items which are missing. <br><br>If you find any bugs, feel free to message me!</p>
@@ -274,9 +281,10 @@
                 <p>A R4PlD<br>Development</p>
             </div>
         </footer>
-        <div id="spritesheets" style="display: none;">
+        <div id="spritesheets">
             <img src="images/spritesheet.png" id="target-image" alt="Spritesheet for block renderer">
-            <img src="images/default_skin.png" id="skin-image" alt="Player Sking for block renderer">
+            <img src="images/default_skin.png" id="skin-image" alt="Player Skin for block renderer">
+            <img src="images/missing_texture.png" id="custom-texture-image" alt="Custom Item Texture for block renderer">
             <img src="images/enchantment_glint.png" id="enchantment-glint-image" alt="The enchantment glint for the block renderer">
         </div>
     </body>
