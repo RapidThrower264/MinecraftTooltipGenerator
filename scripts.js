@@ -775,37 +775,33 @@ class Callback {
 
 class Settings {
     constructor() {
-        // item display settings
-        this._includeDisplayItem = new Callback(false);
-        this._applyEnchantGlint = new Callback(false);
-        this._displayItemSize = new Callback("ratio");
-        this._itemTintLayer1 = new Callback("#000000");
-        this._itemTintLayer2 = new Callback("#ffffff");
-        // image settings
-        this._firstLineGap = new Callback(true);
-        this._renderBackground = new Callback(true);
-        this._fontVersion = new Callback(0);
-        // editor settings
-        this._updatePeriod = new Callback(2);
-        this._imageScale = new Callback(window.innerWidth < 480 ? 1.5 : 2);
-        // stats settings
-        this._insertIconOnly = new Callback(false);
-        this._preferSectionSymbol = new Callback(false);
+        this._settingBindings = {};
+        this._savableSettings = [];
         
-        this._settingBindings = {
-            "first-line-gap": this._firstLineGap,
-            "render-background": this._renderBackground,
-            "font-version": this._fontVersion,
-            "update-period": this._updatePeriod,
-            "image-scale": this._imageScale,
-            "include-display-item": this._includeDisplayItem,
-            "apply-enchant-glint": this._applyEnchantGlint,
-            "display-item-size": this._displayItemSize,
-            "item-tint-layer-1": this._itemTintLayer1,
-            "item-tint-layer-2": this._itemTintLayer2,
-            "insert-icon-only": this._insertIconOnly,
-            "prefer-section-symbol": this._preferSectionSymbol,
-        }
+        let canSaveSettings = false;
+        try {
+            canSaveSettings = localStorage.getItem("save-settings")
+        } catch {}
+        this._saveSettings = new Callback(Boolean(canSaveSettings));
+        this._settingBindings["save-settings"] = this._saveSettings;
+        this._savableSettings.push("save-settings");
+
+        // item display settings
+        this._includeDisplayItem = this.loadBooleanSetting("include-display-item", false, false);
+        this._applyEnchantGlint = this.loadBooleanSetting("apply-enchant-glint", false, false);
+        this._displayItemSize = this.loadStringSetting("display-item-size", true, "ratio", ["ratio", "match-height", "match-width"]);
+        this._itemTintLayer1 = this.loadColorSetting("item-tint-layer-1", false, "#000000");
+        this._itemTintLayer2 = this.loadColorSetting("item-tint-layer-2", false, "#ffffff");
+        // image settings
+        this._firstLineGap = this.loadBooleanSetting("first-line-gap", false, true);
+        this._renderBackground = this.loadBooleanSetting("render-background", false, true);
+        this._fontVersion = this.loadNumberSetting("font-version", true, 0, 0, 1);
+        // editor settings
+        this._updatePeriod = this.loadNumberSetting("update-period", true, 2, 0, Number.MAX_SAFE_INTEGER);
+        this._imageScale = this.loadNumberSetting("image-scale", false, window.innerWidth < 480 ? 1.5 : 2, 0.1, Number.MAX_SAFE_INTEGER);
+        // stats settings
+        this._insertIconOnly = this.loadBooleanSetting("insert-icon-only", true, false);
+        this._preferSectionSymbol = this.loadBooleanSetting("prefer-section-symbol", true, false);
     }
 
     get firstLineGap() {
@@ -856,6 +852,48 @@ class Settings {
         return this._preferSectionSymbol.value;
     }
 
+    get saveSettings() {
+        return this._saveSettings.value;
+    }
+
+    loadSetting(settingName, saveSetting, type, fallback, validationFunction) {
+        let result;
+        if (this._saveSettings.value) {
+            try {
+                result = type(localStorage.getItem(settingName) ?? fallback);
+                result = validationFunction(result) ? result : fallback;
+            } catch {
+                console.warn(`There was an issue trying to load ${settingName}`);
+                result = fallback;
+            }
+        }
+        else
+            result = fallback;
+
+        if (saveSetting)
+            this._savableSettings.push(settingName);
+
+        let callback = new Callback(result);
+        this._settingBindings[settingName] = callback;
+        return callback;
+    }
+
+    loadNumberSetting(settingName, saveSetting, fallback, lowerBound, upperBound) {
+        return this.loadSetting(settingName, saveSetting, Number, fallback, (value) => Number.isFinite(value) && value >= lowerBound && value <= upperBound);
+    }
+
+    loadBooleanSetting(settingName, saveSetting, fallback) {
+        return this.loadSetting(settingName, saveSetting, Boolean, fallback, (_) => true);
+    }
+
+    loadStringSetting(settingName, saveSetting, fallback, options) {
+        return this.loadSetting(settingName, saveSetting, String, fallback, (value) => options.includes(value));
+    }
+
+    loadColorSetting(settingName, saveSetting, fallback) {
+        return this.loadSetting(settingName, saveSetting, String, fallback, (value) => /#[0-9a-fA-F]{6}/g.test(value));
+    }
+
     getSetting(setting) {
          if (setting in this._settingBindings) {
             return this._settingBindings[setting].value;
@@ -883,8 +921,16 @@ class Settings {
             console.warn(`Couldn't find the setting "${setting}"`);
             return undefined;
         }
-        
-    } 
+    }
+
+    saveToLocalStorage() {
+        if (this._saveSettings.value) {
+            this._savableSettings.forEach(setting => {
+                let value = this._settingBindings[setting].value;
+                localStorage.setItem(setting, typeof value == "boolean" ? (value ? "true" : "") : value.toString())
+            });
+        }
+    }
 }
 
 class GlyphSprite {
@@ -1005,7 +1051,8 @@ var FONT_SIZE = parseInt(16 * dpi * 0.5);
 var LINE_HEIGHT = FONT_SIZE + dpi * 2;
 
 // SETTINGS
-var settings = new Settings();
+let settings = new Settings();
+window.onbeforeunload = () => { settings.saveToLocalStorage() };
 
 // Overlay Toggling Stuff
 var currentOverlay = "";

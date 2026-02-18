@@ -209,6 +209,14 @@
                             </div>
                             <h3>Editor Settings</h3>
                             <div class="setting-section">
+                                <div class="setting-container">
+                                    <div class="setting-hint">
+                                        <span>Save Settings?</span>
+                                        <span class="hint">By enabling this, you are consenting to storing settings in your browser.</span>
+                                        <span class="cookies-hint hint"><strong>Note</strong>: This does requires cookies (local storage) to be enabled.</span>
+                                    </div>
+                                    <input type="checkbox" id="save-settings" class="setting" setting="save-settings">
+                                </div>
                                 <div class="setting-container vertical">
                                     <span>Image Refresh Interval</span>
                                     <input type="range" id="update-period" class="setting" setting="update-period" min="0.5" max="10" step="0.5" data-format="%s seconds">
