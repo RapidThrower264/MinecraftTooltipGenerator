@@ -804,57 +804,31 @@ class Settings {
         this._preferSectionSymbol = this.loadBooleanSetting("prefer-section-symbol", true, false);
     }
 
-    get firstLineGap() {
-        return this._firstLineGap.value;
-    }
+    get firstLineGap() { return this._firstLineGap.value; }
 
-    get renderBackground() {
-        return this._renderBackground.value;
-    }
+    get renderBackground() { return this._renderBackground.value; }
 
-    get fontVersion() {
-        return this._fontVersion.value;
-    }
+    get fontVersion() { return this._fontVersion.value; }
 
-    get updatePeriod() {
-        return this._updatePeriod.value;
-    }
+    get updatePeriod() { return this._updatePeriod.value; }
 
-    get imageScale() {
-        return this._imageScale.value;
-    }
+    get imageScale() { return this._imageScale.value; }
 
-    get includeDisplayItem() {
-        return this._includeDisplayItem.value;
-    }
+    get includeDisplayItem() { return this._includeDisplayItem.value; }
 
-    get applyEnchantGlint() {
-        return this._applyEnchantGlint.value;
-    }
+    get applyEnchantGlint() { return this._applyEnchantGlint.value; }
 
-    get displayItemSize() {
-        return this._displayItemSize.value;
-    }
+    get displayItemSize() { return this._displayItemSize.value; }
 
-    get itemTintLayer1() {
-        return this._itemTintLayer1.value;
-    }
+    get itemTintLayer1() { return this._itemTintLayer1.value; }
 
-    get itemTintLayer2() {
-        return this._itemTintLayer2.value;
-    }
+    get itemTintLayer2() { return this._itemTintLayer2.value; }
 
-    get insertIconOnly() {
-        return this._insertIconOnly.value;
-    }
+    get insertIconOnly() { return this._insertIconOnly.value; }
 
-    get preferSectionSymbol() {
-        return this._preferSectionSymbol.value;
-    }
+    get preferSectionSymbol() { return this._preferSectionSymbol.value; }
 
-    get saveSettings() {
-        return this._saveSettings.value;
-    }
+    get saveSettings() { return this._saveSettings.value; }
 
     loadSetting(settingName, saveSetting, type, fallback, validationFunction) {
         let result;
