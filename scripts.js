@@ -779,8 +779,10 @@ class Settings {
         this._savableSettings = [];
         
         let canSaveSettings = false;
+        this._cookiesEnabled = false;
         try {
-            canSaveSettings = localStorage.getItem("save-settings")
+            canSaveSettings = localStorage.getItem("save-settings");
+            this._cookiesEnabled = true;
         } catch {}
         this._saveSettings = new Callback(Boolean(canSaveSettings));
         this._settingBindings["save-settings"] = this._saveSettings;
@@ -829,6 +831,8 @@ class Settings {
     get preferSectionSymbol() { return this._preferSectionSymbol.value; }
 
     get saveSettings() { return this._saveSettings.value; }
+
+    get cookiesEnabled() { return this._cookiesEnabled; }
 
     loadSetting(settingName, saveSetting, type, fallback, validationFunction) {
         let result;
@@ -1290,6 +1294,10 @@ window.addEventListener("load", async (event) => {
     showDisplayItemInput = document.getElementById("include-display-item");
     itemSearchBar = document.getElementById("searched-item-input");
     tintColorSelectors = document.querySelectorAll(".tint-color-selector");
+
+    if (!settings.cookiesEnabled) {
+        document.getElementById("cookies-reminder").classList.remove("hidden");
+    }
 
     // adding event listeners to all of the settings fields
     let settingInputs = document.querySelectorAll(".setting");
