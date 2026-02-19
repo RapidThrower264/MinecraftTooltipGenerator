@@ -33,6 +33,10 @@ body {
     background: var(--primary-600);
 }
 
+h4 {
+    margin-bottom: 4px;
+}
+
 footer {
     background-color: var(--window-bg);
     color: #505063;
@@ -372,6 +376,23 @@ main {
 
 .toggleable.active {
     display: flex;
+}
+
+.hoverable-container {
+    display: grid;
+    grid-template-rows: 0fr;
+    transition: grid-template-rows 0.75s ease-out;
+    overflow-y: hidden;
+    border-bottom: 2px solid #535353;
+    padding-bottom: 4px;
+}
+
+.hoverable-content {
+    overflow: hidden;
+}
+
+.hoverable:hover .hoverable-container {
+    grid-template-rows: 1fr;
 }
 
 input[type="range"] {
