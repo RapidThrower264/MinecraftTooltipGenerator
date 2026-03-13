@@ -248,15 +248,14 @@ class TextGenerator {
 
         // draw each character into the buffer
         let lineWidth = (styles.isStrikethrough && text.length > 0) ? dpi : 0;
-        for (var i = 0; i < text.length; i++) {
-            var characterCode = text.codePointAt(i);
-            let unicode = ("0000" + characterCode.toString(16)).slice(-4);
-            let page = parseInt(unicode.slice(0, 2), 16);
-            let code = parseInt(unicode.slice(-2), 16);
+        for (const character of text) {
+            let characterCode = character.codePointAt(i);
+            let page = Math.floor(characterCode / 256);
+            let code = characterCode % 256;
 
             if (page != currentGlyphPageCode) {
                 currentGlyphPageCode = page;
-                glyphPage = GLYPHS[this.settings.fontVersion][page];
+                glyphPage = GLYPHS.getPage(this.settings.fontVersion, page);
             }
 
             let spriteX = (code % 16) * spriteWidth;
@@ -912,41 +911,66 @@ class Settings {
 }
 
 class GlyphSprite {
-    constructor(glyphWidths, unicodePage) {
+    constructor(glyphWidths, fontImage) {
         this.glyphWidths = glyphWidths;
-        this.unicodePage = unicodePage;
-        this.fontImage = undefined;
-        this.loadedSuccessful = false;
+        this.fontImage = fontImage;
     }
     
     get image() {
         return this.fontImage;
     }
 
-    get isReady() {
-        return this.loadedSuccessful;
-    }
-
     getGlyphWidth(characterIndex) {
         return this.glyphWidths[characterIndex];
     }
+}
 
-    async load() {
-        this.fontImage = new Image();
-        this.fontImage.crossOrigin = "anonymous";
-        this.fontImage.style.background = "#000";
-        return new Promise((resolve) => {
-            this.fontImage.onload = () => {
-                this.loadedSuccessful = true;
+class GlyphManager {
+    constructor() {
+        this.glyphs = {};
+        this.canvas = document.createElement("canvas");
+        this.ctx = this.canvas.getContext("2d", {"willReadFrequently": true});
+        this.canvas.width = 257;
+        this.canvas.height = 256;
+    }
+
+    hasPage(fontVersion, page) {
+        return (fontVersion + "/" + page) in this.glyphs;
+    }
+
+    loadPage(fontVersion, page) {
+        let widths = new Array(256);
+        let fontImage = new Image();
+        fontImage.crossOrigin = "anonymous";
+        fontImage.style.background = "#000";
+
+        let promise = new Promise((resolve) => {
+            fontImage.onload = () => {
+                this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+                this.ctx.drawImage(fontImage, 0, 0);
+                
+                let imageData = this.ctx.getImageData(256, 0, 1, 256).data;
+                for (let i = 0; i < 256; i++) {
+                    widths[i] = imageData[i * 4];
+                }
+
+                let sprite = new GlyphSprite(widths, fontImage);
+                this.glyphs[fontVersion + "/" + page] = sprite;
                 resolve(true);
             }
-            this.fontImage.onerror = () => {
-                const errorData = createDebugInformation("fontImageLoading", `Failed to load ${this.unicodePage}`);
-                createToast("error", `There was an issue trying to load one of the text files for a character.`, "This could mean you are not connected to the Internet,\nOR you are trying to access a emoji/character that doesn't exist.", "Click me to copy relevant debug data to your clipboard", errorData);
+            fontImage.onerror = () => {
+                const errorData = createDebugInformation("fontImageLoading", `Failed to load ${page}`);
+                createToast("error", `There was an issue trying to load one of the text files for a character in page ${page}.`, "This could mean you are not connected to the Internet,\nOR you are trying to access a emoji/character that doesn't exist.", "Click me to copy relevant debug data to your clipboard", errorData);
                 resolve(false);
             }
-            this.fontImage.src = `glyphs/${this.unicodePage}.png`;
-        });
+            fontImage.src = `glyphs/${page > 255 ? "gnu/" : (fontVersion == 0 ? "old/" : "new/")}${page}.png`;
+        })
+        
+        return promise;
+    }
+
+    getPage(fontVersion, page) {
+        return this.glyphs[fontVersion + "/" + page];
     }
 }
 
@@ -1011,7 +1035,7 @@ STYLES.forEach((style, index) => {
 var DEFAULT_COLOR = GRAY;
 var DEFAULT_STYLES = new Array(STYLES.length - 1).fill(false);
 
-const GLYPHS = [];
+const GLYPHS = new GlyphManager();
 const RANDOM_INTROS = ["&cText &9Will &6Go &aHere", "&fGet &cCreative &fWith It!", "&6&lBIG &fWords &b&lGo &fHere", "&fHere's a Canvas...\n     &e&oGo &a&oPaint!"];
 const TOAST_TYPES = {error: {color: "#ff5555"}, issue: {color: "#ffff55"}, success: {color: "#55ff55"}};
 
@@ -1151,33 +1175,6 @@ function loadTemplates() {
         });
         templateContainer.appendChild(button);
     });
-}
-
-async function loadFonts() {
-    // loads the glyph sizes file from the server and makes all of the sprites
-    await fetch("data/glyph_sizes.bin")
-        .then(response => {
-            return response.bytes();
-        })
-        .then(async characterWidths => {
-            // calculates the number of versions of the font are specified in the file
-            const fontVersionCount = Math.floor(characterWidths.length / 65536);
-            for (let fontIndex = 0; fontIndex < fontVersionCount; fontIndex++) {
-                let glyphSet = [];
-                const GLYPH_PATH = fontIndex == 0 ? "old/" : "new/";
-                let characterWidthStartIndex = fontIndex * 65536;
-                // iterate over all the pages, creating a GlyphSprite for each page
-                for (let glyphPage = 0; glyphPage < 256; glyphPage++) {
-                    let imagePath = GLYPH_PATH + ("0" + glyphPage.toString(16)).slice(-2);
-                    let sprite = new GlyphSprite(characterWidths.slice(characterWidthStartIndex, characterWidthStartIndex + 256), imagePath);
-                    glyphSet[glyphPage] = sprite;
-                    characterWidthStartIndex += 256;
-                }
-                // loads the first page (ASCII page) of the font
-                await glyphSet[0].load();
-                GLYPHS[fontIndex] = glyphSet;
-            }
-        })
 }
 
 function setBase64SkinTexture(texture) {
@@ -1361,7 +1358,6 @@ window.addEventListener("load", async (event) => {
     loadColors();
     loadStats();
     loadTemplates();
-    await loadFonts();
 
     document.querySelectorAll(".overlay-btn").forEach(element => {
         var targetOverlay = element.getAttribute("data-overlay");
