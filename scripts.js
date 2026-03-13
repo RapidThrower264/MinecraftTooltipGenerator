@@ -548,18 +548,21 @@ class TextManager {
     }
 
     async splitText(text) {
+        let safeText = "";
         for (const character of text) {
-            let characterCodePage = Math.floor(character.codePointAt(0) / 256);
-            if (!GLYPHS[this.settings.fontVersion][characterCodePage].isReady) {
-                let successfulLoading = await GLYPHS[this.settings.fontVersion][characterCodePage].load()
-                if (!successfulLoading) {
-                    return;
+            let codePage = Math.floor(character.codePointAt(0) / 256);
+            if (!GLYPHS.hasPage(this.settings.fontVersion, codePage)) {
+                const characterLoaded = await GLYPHS.loadPage(this.settings.fontVersion, codePage);
+                if (!characterLoaded) {
+                    console.warn(`Could not load ${character} from the correct page (${this.settings.version}/${codePage})`);
+                    continue;
                 }
             }
+            safeText += character;
         }
 
         this.lines = [];
-        let textLines = text.split("\n");
+        let textLines = safeText.split("\n");
 
         var currentColor = DEFAULT_COLOR;
         var styles = DEFAULT_STYLES.slice();
