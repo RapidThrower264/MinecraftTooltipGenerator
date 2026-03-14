@@ -1105,7 +1105,7 @@ function loadStats() {
     var statReminder = document.getElementById("stat-code-reminder");
     let createStatReminders = (statContainer, stats) => {
         stats.forEach(stat => {
-            let charCode = String.fromCharCode(parseInt(stat.icon.replaceAll(/[&#x;]/gm, ""), 16));
+            let charCode = String.fromCodePoint(parseInt(stat.icon.replaceAll(/[&#x;]/gm, ""), 16));
             let statColor = REGISTERED_COLORS[stat.color];
             let button = createButton("stat-reminder", `${stat.icon} ${stat.stat}`, statColor, () => {
                 let insertText;
@@ -1115,7 +1115,7 @@ function loadStats() {
                 } else {
                     let formatting = STAT_FORMATTING[stat?.parseType ?? "NORMAL"];
                     let formattingMap = {"%c": statColor.code, "%d": stat.subColor ? REGISTERED_COLORS[stat.subColor].code : undefined, "%f":  formatCode, "%i": charCode, "%s": stat.stat};
-                    insertText = formatting.replace(/%[cdfis]/g, key => formattingMap[key])
+                    insertText = formatting.replace(/%[cdfis]/g, key => formattingMap[key]);
                 }
                 return insertText;
             }, () => (settings.preferSectionSymbol ? "§" : "&") + statColor.code + charCode);
