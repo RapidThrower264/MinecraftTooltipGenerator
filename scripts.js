@@ -1042,6 +1042,23 @@ let textarea;
 let showDisplayItemInput, itemSearchBar, tintColorSelectors;
 let toastContainer, toastTemplate;
 
+function convertMinecraftComponentToText(component) {
+    let result = "";
+    if (component.italic == "1b")
+        result += "&o";
+    
+    if (component.extra) {
+        for (const extraAttribute of component.extra) {
+            result += "&" + REGISTERED_COLORS[extraAttribute.color.toUpperCase()]?.code ?? "7";
+            if (extraAttribute.bold == "1b")
+                result += "&l"
+
+            result += extraAttribute.text ?? "";
+        }
+    }
+    result += component.text ?? "";
+    return result;
+}
 
 function createButton(reminderClass, buttonText, color, textInsert, specialTextInsert) {
     var reminder = document.createElement("button");
@@ -1550,7 +1567,7 @@ window.addEventListener("load", async (event) => {
         let data = document.getElementById("nbt-textarea").value;
         let json;
         try {
-            json = JSON.parse(data.replace(/    *(\w+)/g, '"$1"').replace(/:\s*(-?\d+(?:\.\d+)?[bBsSlLfFdD]?)/g, ': "$1"'));
+            json = JSON.parse(data.replace(/ *(.*): /g, '"$1": ').replace(/:\s*(-?\d+(?:\.\d+)?[bBsSlLfFdD]?)/g, ': "$1"'));
         } catch (error) {
             const errorData = createDebugInformation("jsonParsing", `Could not parse the content ${data}.`);
             errorData.error = error;
@@ -1558,32 +1575,33 @@ window.addEventListener("load", async (event) => {
             return;
         }
 
-        let itemID, itemName, itemLore;
-        itemID = json.id?.replace("minecraft:", "").replace(/_/g, " ");
+        let itemID = json.id?.replace("minecraft:", "").replace(/_/g, " ");
         if (itemID != undefined) {
             showDisplayItemInput.checked = true;
             showDisplayItemInput.dispatchEvent(new Event("change"));
             
             let tints = [];
-            if (itemID == "skull") {
-                let skull = json.tag?.SkullOwner?.Properties?.textures[0]?.Value ?? undefined;
-                tints.push(skull);
+            if (itemID == "player head" || itemID == "skull") {
+                let skullData = json.components?.["minecraft:profile"]?.properties;
+                if (skullData) tints.push(skullData[0]?.value);
             }
             selectItem(itemID, tints);
         }
 
-        itemName = json.tag?.display?.Name;
-        if (itemName == undefined) {
-            itemName = "";
+        let itemLore = [];
+        let itemName = json.components?.["minecraft:custom_name"];
+        if (itemName == undefined)
             createToast("issue", "There was an issue trying to retrieve the name for this item.");
-        }
+        else 
+            itemLore.push(convertMinecraftComponentToText(itemName));
 
-        itemLore = json.tag?.display?.Lore;
-        if (itemLore == undefined) {
-            itemLore = [];
+        let extractedLore = json.components?.["minecraft:lore"];
+        if (itemLore == undefined)
             createToast("issue", "There was an issue trying to retrieve the item lore for this item.", undefined, "Click me to copy relevant debug data to your clipboard", {});
+        else {
+            for (const component of extractedLore)
+                itemLore.push(convertMinecraftComponentToText(component))
         }
-        itemLore.unshift(itemName);
         
         let itemText = "";
         for (const line of itemLore) {
