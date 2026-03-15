@@ -1575,6 +1575,19 @@ window.addEventListener("load", async (event) => {
             return;
         }
 
+        let itemID = json.id?.replace("minecraft:", "").replace(/_/g, " ");
+        if (itemID != undefined) {
+            showDisplayItemInput.checked = true;
+            showDisplayItemInput.dispatchEvent(new Event("change"));
+            
+            let tints = [];
+            if (itemID == "player head" || itemID == "skull") {
+                let skullData = json.components?.["minecraft:profile"]?.properties;
+                if (skullData) tints.push(skullData[0]?.value);
+            }
+            selectItem(itemID, tints);
+        }
+
         let itemLore = [];
         let itemName = json.components?.["minecraft:custom_name"];
         if (itemName == undefined)
