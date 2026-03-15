@@ -1567,7 +1567,7 @@ window.addEventListener("load", async (event) => {
         let data = document.getElementById("nbt-textarea").value;
         let json;
         try {
-            json = JSON.parse(data.replace(/ *(.*): /g, '"$1": ').replace(/:\s*(-?\d+(?:\.\d+)?[bBsSlLfFdD]?)/g, ': "$1"'));
+            json = JSON.parse(data.replace(/^\s*([a-zA-Z:_-]*):\s/gm, '"$1": ').replace(/:\s*(-?\d+(?:\.\d+)?[bBsSlLfFdD]?)/g, ': "$1"'));
         } catch (error) {
             const errorData = createDebugInformation("jsonParsing", `Could not parse the content ${data}.`);
             errorData.error = error;
