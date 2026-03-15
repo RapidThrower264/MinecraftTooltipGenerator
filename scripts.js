@@ -1002,6 +1002,15 @@ COLORS.forEach(color => {
     REGISTERED_STYLES[color.code] = color;
 });
 
+const NBT_MAP = {
+    "color": (value) => value ? "&" + (value[0] == "#" ? value : REGISTERED_COLORS[value.toUpperCase()]).code : "",
+    "bold": (value) => value == "1b" ? "&l" : "",
+    "strikethrough": (value) => value == "1b" ? "&m" : "",
+    "underline": (value) => value == "1b" ? "&n" : "",
+    "italic": (value) => value == "1b" ? "&o" : "",
+    "obfuscated": (value) => value == "1b" ? "&k" : "",
+};
+
 const STYLES = [BOLD, STRIKETHROUGH, UNDERLINE, ITALIC, OBFUSCATED, RESET];
 STYLES.forEach((style, index) => {
     style.styleIndex = index;
@@ -1044,16 +1053,22 @@ let toastContainer, toastTemplate;
 
 function convertMinecraftComponentToText(component) {
     let result = "";
-    if (component.italic == "1b")
-        result += "&o";
+    let currentState = {"color": "&7", "bold": "", "strikethrough": "", "underline": "", "italic": "", "obfuscated": ""};
     
     if (component.extra) {
         for (const extraAttribute of component.extra) {
-            result += "&" + REGISTERED_COLORS[extraAttribute.color.toUpperCase()]?.code ?? "7";
-            if (extraAttribute.bold == "1b")
-                result += "&l"
-
-            result += extraAttribute.text ?? "";
+            if (typeof extraAttribute === 'object') {
+                let targetKeys = Object.keys(extraAttribute);
+                for (const key of targetKeys)
+                    if (key in currentState) currentState[key] = NBT_MAP[key](extraAttribute[key]);
+            
+                let values = Object.values(currentState);
+                for (const key of values)
+                    result += key;
+                result += extraAttribute.text ?? "";
+            } else {
+                result += extraAttribute
+            }
         }
     }
     result += component.text ?? "";
