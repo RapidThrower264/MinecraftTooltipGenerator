@@ -1066,12 +1066,18 @@ function convertMinecraftComponentToText(component) {
                 for (const key of values)
                     result += key;
                 result += extraAttribute.text ?? "";
+                
+                if (extraAttribute.extra) {
+                    for (const extraElement of extraAttribute.extra) {
+                        result += convertMinecraftComponentToText(extraElement);
+                    }
+                }
             } else {
                 result += extraAttribute
             }
         }
     }
-    result += component.text ?? "";
+    result += component.text ?? component;
     return result;
 }
 
