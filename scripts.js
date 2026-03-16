@@ -1066,12 +1066,18 @@ function convertMinecraftComponentToText(component) {
                 for (const key of values)
                     result += key;
                 result += extraAttribute.text ?? "";
+                
+                if (extraAttribute.extra) {
+                    for (const extraElement of extraAttribute.extra) {
+                        result += convertMinecraftComponentToText(extraElement);
+                    }
+                }
             } else {
                 result += extraAttribute
             }
         }
     }
-    result += component.text ?? "";
+    result += component.text ?? component;
     return result;
 }
 
@@ -1582,7 +1588,9 @@ window.addEventListener("load", async (event) => {
         let data = document.getElementById("nbt-textarea").value;
         let json;
         try {
-            json = JSON.parse(data.replace(/^\s*([a-zA-Z:_-]*):\s/gm, '"$1": ').replace(/:\s*(-?\d+(?:\.\d+)?[bBsSlLfFdD]?)/g, ': "$1"'));
+            // order of operations for regex a) fix lists containing B, I or S. b) wrap keys with quotation marks. c) remove boolean, short, int, long, float or double for data types
+            data = data.replace(/(^\s*[a-zA-Z:_0-9]*:\s)\[[BIS];/gm, "$1[").replace(/^\s*([a-zA-Z:_0-9]*):\s/gm, '"$1": ').replace(/:\s*(-?\d+(?:\.\d+)?[bBsSlLfFdD]?)/g, ': "$1"')
+            json = JSON.parse(data);
         } catch (error) {
             const errorData = createDebugInformation("jsonParsing", `Could not parse the content ${data}.`);
             errorData.error = error;
