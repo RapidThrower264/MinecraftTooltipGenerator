@@ -1071,8 +1071,14 @@ function convertMinecraftComponentToText(component, nbtState) {
                 result += key;
             result += component.text;
         }
-    } else
-        result += component;
+    } else {
+        if (component.length > 0) {
+            let values = Object.values(state);
+            for (const key of values)
+                result += key;
+            result += component;
+        }
+    }
 
     return result;
 }
