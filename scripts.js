@@ -1002,6 +1002,7 @@ COLORS.forEach(color => {
     REGISTERED_STYLES[color.code] = color;
 });
 
+const DEFAULT_NBT_STATE = {"color": "&7", "bold": "", "strikethrough": "", "underline": "", "italic": "", "obfuscated": ""};
 const NBT_MAP = {
     "color": (value) => value ? "&" + (value[0] == "#" ? value : REGISTERED_COLORS[value.toUpperCase()]).code : "",
     "bold": (value) => value == "1b" ? "&l" : "",
@@ -1051,33 +1052,28 @@ let textarea;
 let showDisplayItemInput, itemSearchBar, tintColorSelectors;
 let toastContainer, toastTemplate;
 
-function convertMinecraftComponentToText(component) {
+function convertMinecraftComponentToText(component, nbtState) {
     let result = "";
-    let currentState = {"color": "&7", "bold": "", "strikethrough": "", "underline": "", "italic": "", "obfuscated": ""};
     
-    if (component.extra) {
-        for (const extraAttribute of component.extra) {
-            if (typeof extraAttribute === 'object') {
-                let targetKeys = Object.keys(extraAttribute);
-                for (const key of targetKeys)
-                    if (key in currentState) currentState[key] = NBT_MAP[key](extraAttribute[key]);
-            
-                let values = Object.values(currentState);
-                for (const key of values)
-                    result += key;
-                result += extraAttribute.text ?? "";
-                
-                if (extraAttribute.extra) {
-                    for (const extraElement of extraAttribute.extra) {
-                        result += convertMinecraftComponentToText(extraElement);
-                    }
-                }
-            } else {
-                result += extraAttribute
-            }
+    let state = {...nbtState == undefined ? nbtState : DEFAULT_NBT_STATE};
+    if (typeof component === 'object') {
+        let targetKeys = Object.keys(component);
+        for (const key of targetKeys) {
+            if (key in DEFAULT_NBT_STATE) state[key] = NBT_MAP[key](component[key]);
         }
-    }
-    result += component.text ?? component;
+
+        if (component.extra)
+            component.extra.forEach(subComponent => result += convertMinecraftComponentToText(subComponent, state))
+
+        if (component.text && component.text.length > 0) {
+            let values = Object.values(state);
+            for (const key of values)
+                result += key;
+            result += component.text;
+        }
+    } else
+        result += component;
+
     return result;
 }
 
