@@ -79,6 +79,9 @@ const STATS = [
     {"icon":"&#x2693;","name":"double_hook_chance","stat":"Double Hook Chance","color":"BLUE"},
     {"icon":"&#x2654;","name":"trophy_fish_chance","stat":"Trophy Fish Chance","color":"GOLD"},
     {"icon":"&#x26C3;","name":"treasure_chance","stat":"Treasure Chance","color":"GOLD"},
+    {"icon":"&#xDAE;","name":"hook","stat":"Hook","color":"BLUE"},
+    {"icon":"&#xAA03;","name":"line","stat":"Line","color":"BLUE"},
+    {"icon":"&#FC9;","name":"sinker","stat":"Sinker","color":"BLUE"},
     {"icon":"&#x26B6;","name":"respiration","stat":"Respiration","color":"DARK_AQUA"},
     {"icon":"&#x274D;","name":"pressure_resistance","stat":"Pressure Resistance","color":"BLUE"},
     {"icon":"&#x16F7;","name":"pull","stat":"Pull","color":"AQUA"}
