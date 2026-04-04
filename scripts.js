@@ -658,7 +658,7 @@ class TextManager {
     }
 
     convertToComponent(segment) {
-        let segmentModifiers = [`"text":"${segment.text}"`];
+        let segmentModifiers = [`"text":"${segment.text.replace(/"/g, "\\\"")}"`];
         TextManager.TEXT_STYLE_KEYS.forEach(style => {
             let result = TextManager.TEXT_STYLE_MAP[style](segment[style])
             if (result != null)
