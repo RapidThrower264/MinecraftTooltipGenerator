@@ -639,7 +639,7 @@ class TextManager {
         });
     }
 
-    convertToMinecraftCommand() {
+    convertToMinecraftCommand(itemName) {
         let loreComponents = [];
         for (const line of this.lines) {
             let lineComponents = [];
@@ -648,7 +648,7 @@ class TextManager {
             }
             loreComponents.push(`[${lineComponents.join(',')}]`);
         }
-        let command = `/give @p cobblestone[custom_name=[${loreComponents[0]}]`;
+        let command = `/give @p ${itemName}[custom_name=[${loreComponents[0]}]`;
         if (loreComponents.length > 1) {
             loreComponents.shift()
             command += `,lore=[${loreComponents.join(",")}]`
@@ -1705,17 +1705,18 @@ window.addEventListener("load", async (event) => {
         }
         
         canvas.blockRenderer.setCustomItemTexture(URL.createObjectURL(event.target.files[0]))
-    })
+    });
 
     canvas.onRedraw.addListener(() => {
-        let command = canvas.textRenderer.textContent.convertToMinecraftCommand();
+        let targetItemName = itemSearchBar.value.length == 0 ? "cobblestone" : itemSearchBar.value.toLowerCase().replaceAll(" ", "_");
+        let command = canvas.textRenderer.textContent.convertToMinecraftCommand(targetItemName);
         document.getElementById("minecraft-command-output").value = command;
         let tooLongMessageElement = document.getElementById("message-too-long");
         if (command.length >= 255)
             tooLongMessageElement.classList.remove("hidden");
         else
             tooLongMessageElement.classList.add("hidden");
-    })
+    });
     
     await canvas.redrawImage();
 });
