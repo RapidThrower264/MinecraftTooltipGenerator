@@ -540,6 +540,11 @@ input[type="file"] {
     min-height: 30em;
 }
 
+#minecraft-command-output {
+    width: calc(100% - 2em);
+    min-height: 20em;
+}
+
 .tip::before {
     content: "USEFUL TIP: ";
     font-weight: 800;

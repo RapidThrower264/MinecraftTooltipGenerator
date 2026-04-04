@@ -43,6 +43,7 @@ class MinecraftGenerator {
         // generator refresh settings.
         this.timeout = undefined;
         this.isValid = false;
+        this.onRedraw = new Callback(true);
         this.updatePeriodChange(this.settings.updatePeriod);
 
         // creating listeners for all settings so that the generator remains up to date
@@ -89,12 +90,12 @@ class MinecraftGenerator {
             activeCanvas = this.textCanvas;
             inactiveCanvas = this.combinedCanvas;
         }
-        
         this.changeWrapperSize();
 
         inactiveCanvas.classList.remove("active");
         activeCanvas.classList.add("active");
         this.isValid = true;
+        this.onRedraw.value = true;
     }
 
     redrawCombinedCanvas() {
@@ -513,6 +514,10 @@ class MCColor extends MCStyle {
         this.color = color;
         this.dropShadow = dropShadow;
     }
+
+    getColor() {
+        return this.name == "CUSTOM" ? this.color : this.name;
+    }
 }
 
 class MCCode extends MCStyle {
@@ -539,6 +544,16 @@ function minecraftShadow(hex) {
 }
 
 class TextManager {
+    static TEXT_STYLE_MAP = {
+        "isBold": (value) => value ? `"bold":true` : null,
+        "isItalic": (value) => `"italic":${value}`,
+        "isUnderline": (value) => value ? `"underline":true` : null,
+        "isStrikethrough": (value) => value ? `"strikethrough":true`: null,
+        "isObfuscated": (value) => value ? `"obfuscated":true` : null,
+        "color": (value) => `"color":"${value.getColor().toLowerCase()}"`
+    }
+    static TEXT_STYLE_KEYS = Object.keys(this.TEXT_STYLE_MAP);
+    
     constructor(settings) {
         this.lines = [];
         this.settings = settings;
@@ -622,6 +637,34 @@ class TextManager {
 
             this.lines.push(currentLine);
         });
+    }
+
+    convertToMinecraftCommand() {
+        let loreComponents = [];
+        for (const line of this.lines) {
+            let lineComponents = [];
+            for (const segment of line.segments) {
+                lineComponents.push(this.convertToComponent(segment));
+            }
+            loreComponents.push(`[${lineComponents.join(',')}]`);
+        }
+        let command = `/give @p cobblestone[custom_name=[${loreComponents[0]}]`;
+        if (loreComponents.length > 1) {
+            loreComponents.shift()
+            command += `,lore=[${loreComponents.join(",")}]`
+        }
+        command += "]";
+        return command;
+    }
+
+    convertToComponent(segment) {
+        let segmentModifiers = [`"text":"${segment.text}"`];
+        TextManager.TEXT_STYLE_KEYS.forEach(style => {
+            let result = TextManager.TEXT_STYLE_MAP[style](segment[style])
+            if (result != null)
+                segmentModifiers.push(result);
+        });
+        return "{" + segmentModifiers.join(",") + "}"
     }
 
     getSegmentData() {
@@ -1662,6 +1705,16 @@ window.addEventListener("load", async (event) => {
         }
         
         canvas.blockRenderer.setCustomItemTexture(URL.createObjectURL(event.target.files[0]))
+    })
+
+    canvas.onRedraw.addListener(() => {
+        let command = canvas.textRenderer.textContent.convertToMinecraftCommand();
+        document.getElementById("minecraft-command-output").value = command;
+        let tooLongMessageElement = document.getElementById("message-too-long");
+        if (command.length >= 255)
+            tooLongMessageElement.classList.remove("hidden");
+        else
+            tooLongMessageElement.classList.add("hidden");
     })
     
     await canvas.redrawImage();
