@@ -60,6 +60,7 @@ class MinecraftGenerator {
         this.settings.getCallback("display-item-size").addListener((value) => this.forceRerender(false, false));
         this.settings.getCallback("item-tint-layer-1").addListener((value) => this.blockRenderer.setTintLayer(value, 0));
         this.settings.getCallback("item-tint-layer-2").addListener((value) => this.blockRenderer.setTintLayer(value, 1));
+        this.settings.getCallback("export-type").addListener((value) => this.onRedraw.value = true);
     }
 
     forceRerender(forceTextRender, forceBlockRender) {
@@ -518,6 +519,10 @@ class MCColor extends MCStyle {
     getColor() {
         return this.name == "CUSTOM" ? this.color : this.name;
     }
+
+    isCustomColor() {
+        return this.name == "CUSTOM";
+    }
 }
 
 class MCCode extends MCStyle {
@@ -543,17 +548,7 @@ function minecraftShadow(hex) {
     return "#" + shadowInt.toString(16).padStart(6, "0");
 }
 
-class TextManager {
-    static TEXT_STYLE_MAP = {
-        "isBold": (value) => value ? `"bold":true` : null,
-        "isItalic": (value) => `"italic":${value}`,
-        "isUnderline": (value) => value ? `"underline":true` : null,
-        "isStrikethrough": (value) => value ? `"strikethrough":true`: null,
-        "isObfuscated": (value) => value ? `"obfuscated":true` : null,
-        "color": (value) => `"color":"${value.getColor().toLowerCase()}"`
-    }
-    static TEXT_STYLE_KEYS = Object.keys(this.TEXT_STYLE_MAP);
-    
+class TextManager {  
     constructor(settings) {
         this.lines = [];
         this.settings = settings;
@@ -637,34 +632,6 @@ class TextManager {
 
             this.lines.push(currentLine);
         });
-    }
-
-    convertToMinecraftCommand(itemName) {
-        let loreComponents = [];
-        for (const line of this.lines) {
-            let lineComponents = [];
-            for (const segment of line.segments) {
-                lineComponents.push(this.convertToComponent(segment));
-            }
-            loreComponents.push(`[${lineComponents.join(',')}]`);
-        }
-        let command = `/give @p ${itemName}[custom_name=[${loreComponents[0]}]`;
-        if (loreComponents.length > 1) {
-            loreComponents.shift()
-            command += `,lore=[${loreComponents.join(",")}]`
-        }
-        command += "]";
-        return command;
-    }
-
-    convertToComponent(segment) {
-        let segmentModifiers = [`"text":"${segment.text.replace(/"/g, "\\\"")}"`];
-        TextManager.TEXT_STYLE_KEYS.forEach(style => {
-            let result = TextManager.TEXT_STYLE_MAP[style](segment[style])
-            if (result != null)
-                segmentModifiers.push(result);
-        });
-        return "{" + segmentModifiers.join(",") + "}"
     }
 
     getSegmentData() {
@@ -790,6 +757,139 @@ class LineSegment {
     }
 }
 
+class Exporter {
+    constructor(lineWrapper, extraInformation, extraInformationTitle, showCommandLengthWarning) {
+       this.wrapLine = lineWrapper;
+       this.extraInformation = extraInformation;
+       this.extraInformationTitle = extraInformationTitle;
+       this.showCommandLengthWarning = showCommandLengthWarning;
+    }
+
+    export(lines, data) {}
+
+    parse(lines) {
+        let loreComponents = [];
+        for (const line of lines) {
+            let lineComponents = [];
+            for (const segment of line.segments) {
+                lineComponents.push(this.parseSegment(segment));
+            }
+            loreComponents.push(this.wrapLine(lineComponents));
+        }
+        return loreComponents;
+    }
+
+    parseSegment(segment) {}
+}
+
+class NoExportExporter extends Exporter {
+    constructor() {
+        super((content) => "", undefined, undefined, false);
+    }
+
+    export() {
+        return "";
+    }
+}
+
+class MinecraftCommandExporter extends Exporter {
+    static TEXT_STYLE_MAP = {
+        "isBold": (value) => value ? `"bold":true` : null,
+        "isItalic": (value) => `"italic":${value}`,
+        "isUnderline": (value) => value ? `"underline":true` : null,
+        "isStrikethrough": (value) => value ? `"strikethrough":true`: null,
+        "isObfuscated": (value) => value ? `"obfuscated":true` : null,
+        "color": (value) => `"color":"${value.getColor().toLowerCase()}"`
+    }
+    static TEXT_STYLE_KEYS = Object.keys(this.TEXT_STYLE_MAP);
+
+    constructor() {
+        super((content) => `[${content.join(',')}]`, undefined, undefined, true);
+    }
+
+    export(lines, itemName) {
+        let loreComponents = this.parse(lines);
+        
+        let command = `/give @p ${itemName}[custom_name=[${loreComponents[0]}]`;
+        if (loreComponents.length > 1) {
+            loreComponents.shift();
+            command += `,lore=[${loreComponents.join(",")}]`;
+        }
+        command += "]";
+        return command;
+    }
+
+    parseSegment(segment) {
+        let segmentModifiers = [`"text":"${segment.text.replace(/"/g, "\\\"")}"`];
+        MinecraftCommandExporter.TEXT_STYLE_KEYS.forEach(style => {
+            let modification = MinecraftCommandExporter.TEXT_STYLE_MAP[style](segment[style]);
+            if (modification != null)
+                segmentModifiers.push(modification);
+        });
+        return "{" + segmentModifiers.join(",") + "}";
+    }
+}
+
+class HTMLExporter extends Exporter {
+    static HTML_STYLE_MAP = {
+        "isBold": (value) => value ? {"class": "bold"} : null,
+        "isItalic": (value) => value ? {"class": "italic"} : null,
+        "isUnderline": (value) => value ? {"class": "underline"} : null,
+        "isStrikethrough": (value) => value ? {"class": "strikethrough"}: null,
+        "isObfuscated": (value) => value ? {"class": "strikethrough"} : null,
+        "color": (value) => value.isCustomColor() ? 
+            {"style": `--mc-item-color:${value.color};--mc-item-shadow:${value.dropShadow}`} :
+            {"class": `mc-${value.getColor().toLowerCase().replace(/_/g, "-")}`}
+    }
+    static HTML_STYLE_KEYS = Object.keys(this.HTML_STYLE_MAP);
+    static SANITIZE_TEXT_MAP = {"<": "&lt;", ">": "&gt;", "&": "&amp;", "\"": "&quot;"}
+
+    constructor(minecraftColorList) {
+        super((content) => content.join(""), 
+            () => {
+                let extraData = ".minecraft-item {\n\tbackground-color: #140314;\n\tborder: 0.25em solid #25005e;\n\tpadding: 0.5em;\n}\n\n";
+                extraData += ".minecraft-item span {\n\t--_mc-item-color: var(--mc-item-color, #aaaaaa);\n\t--_mc-item-shadow: var(--mc-item-shadow, #2a2a2a);\n\tcolor: var(--_mc-item-color);\n\ttext-shadow: 0.1em 0.1em var(--_mc-item-shadow);\n\tdisplay: inline-block;\n\twhite-space: pre-wrap;\n}\n\n";
+                extraData += ".minecraft-item span:first-child {\n\tmargin-bottom: 0.25em;\n}\n\n";
+                extraData += ".minecraft-item span.bold {\n\tfont-weight: 900;\n}\n\n";
+                extraData += ".minecraft-item span.italic {\n\tfont-style: italic;\n}\n\n";
+                extraData += ".minecraft-item span.underline {\n\ttext-decoration: underline;\n}\n\n";
+                extraData += ".minecraft-item span.strikethrough {\n\ttext-decoration: line-through;\n}\n\n";
+                
+                this.minecraftColorList.forEach(color => {
+                    extraData += `.minecraft-item span.mc-${color.name.toLowerCase().replace(/_/g, "-")} {\n\t--mc-item-color: ${color.color};\n\t--mc-item-shadow: ${color.dropShadow};\n}\n\n`
+                });
+                return extraData;
+            }, "Required CSS to make the HTML look similar to a Minecraft Item. Feel free to tweak it as you need! (v0.1)", false);
+
+        this.minecraftColorList = minecraftColorList;
+    }
+
+    export(lines, _) {
+        let loreComponents = this.parse(lines);
+        let itemHTML = `<div class="minecraft-item">\n${loreComponents.join("<br>\n")}\n</div>`;
+        return itemHTML;
+    }
+
+    parseSegment(segment) {
+        let segmentClasses = [];
+        let segmentStyles = [];
+        HTMLExporter.HTML_STYLE_KEYS.forEach(style => {
+            let modification = HTMLExporter.HTML_STYLE_MAP[style](segment[style]);
+            if (modification == null) return;
+            if (modification["style"]) segmentStyles.push(modification["style"]);
+            if (modification["class"]) segmentClasses.push(modification["class"]);
+        });
+
+        let segmentHTML = "<span"
+        if (segmentStyles.length > 0)
+            segmentHTML += ` style="${segmentStyles.join(" ")}"`;
+        if (segmentClasses.length > 0)
+            segmentHTML += ` class="${segmentClasses.join(" ")}"`;
+        segmentHTML += `>${segment.text.replace(/[<>&"]/g, item => HTMLExporter.SANITIZE_TEXT_MAP[item])}</span>`
+        return segmentHTML;
+    }
+}
+
 class Callback {
     constructor(initial) {
         this._callbacks = [];
@@ -847,6 +947,8 @@ class Settings {
         // stats settings
         this._insertIconOnly = this.loadBooleanSetting("insert-icon-only", true, false);
         this._preferSectionSymbol = this.loadBooleanSetting("prefer-section-symbol", true, false);
+        // exporting settings
+        this._exportType = this.loadStringSetting("export-type", true, "none", ["none", "minecraft-1.21.5", "html"]);
     }
 
     get firstLineGap() { return this._firstLineGap.value; }
@@ -876,6 +978,8 @@ class Settings {
     get saveSettings() { return this._saveSettings.value; }
 
     get cookiesEnabled() { return this._cookiesEnabled; }
+
+    get exportType() { return this._exportType.value; }
 
     loadSetting(settingName, saveSetting, type, fallback, validationFunction) {
         let result;
@@ -1060,6 +1164,12 @@ STYLES.forEach((style, index) => {
     style.styleIndex = index;
     REGISTERED_STYLES[style.code] = style;
 });
+
+const EXPORTERS = {
+    "none": new NoExportExporter(),
+    "minecraft-1.21.5": new MinecraftCommandExporter(),
+    "html": new HTMLExporter(COLORS)
+}
 
 var DEFAULT_COLOR = GRAY;
 var DEFAULT_STYLES = new Array(STYLES.length - 1).fill(false);
@@ -1709,14 +1819,27 @@ window.addEventListener("load", async (event) => {
 
     canvas.onRedraw.addListener(() => {
         let targetItemName = itemSearchBar.value.length == 0 ? "cobblestone" : itemSearchBar.value.toLowerCase().replaceAll(" ", "_");
-        let command = canvas.textRenderer.textContent.convertToMinecraftCommand(targetItemName);
+        let exporter = EXPORTERS[settings.exportType];
+        let command = exporter.export(canvas.textRenderer.textContent.lines, targetItemName);
         document.getElementById("minecraft-command-output").value = command;
         let tooLongMessageElement = document.getElementById("message-too-long");
-        if (command.length >= 255)
+        if (exporter.showCommandLengthWarning && command.length >= 255)
             tooLongMessageElement.classList.remove("hidden");
         else
             tooLongMessageElement.classList.add("hidden");
     });
+    settings.getCallback("export-type").addListener((value) => {
+        let exporter = EXPORTERS[value];
+        let exporterExtraInformationArea = document.getElementById("exporter-extra-info");
+        if (exporter.extraInformation) {
+            exporterExtraInformationArea.classList.remove("hidden");
+            exporterExtraInformationArea.querySelector("p").innerHTML = exporter.extraInformationTitle;
+            exporterExtraInformationArea.querySelector("textarea").value = exporter.extraInformation();
+        } else {
+            exporterExtraInformationArea.classList.add("hidden");
+        }
+    });
+    settings.getCallback("export-type").invoke(settings.getSetting("export-type"));
     
     await canvas.redrawImage();
 });

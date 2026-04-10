@@ -540,7 +540,7 @@ input[type="file"] {
     min-height: 30em;
 }
 
-#minecraft-command-output {
+#minecraft-command-output, #exporter-info {
     width: calc(100% - 2em);
     min-height: 20em;
 }
