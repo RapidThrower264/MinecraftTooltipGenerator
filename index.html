@@ -243,9 +243,20 @@
                         </div>
                         <div id="io-overlay" class="overlay">
                             <h2>Exporting</h2>
-                            <p>Export to Minecraft Command (Supports 1.21.5+)</p>
+                            <div class="setting-container">
+                                <span>Export As</span>
+                                <select id="export-type" class="setting" setting="export-type">
+                                    <option value="none">None</option>
+                                    <option value="minecraft-1.21.5">1.21.5+ Give Command</option>
+                                    <option value="html">HTML + CSS</option>
+                                </select>
+                            </div>
                             <textarea id="minecraft-command-output" placeholder="Minecraft Command will appear here..." spellcheck="false"></textarea>
                             <p id="message-too-long" class="hidden"><strong>Note</strong>: This command is too long for chat. To run it, you <strong>must</strong> use a command block.</p>
+                            <div id="exporter-extra-info">
+                                <p>Exporter Extra Information</p>
+                                <textarea id="exporter-info"></textarea>
+                            </div>
                         </div>
                         <div id="credits-overlay" class="overlay">
                             <h2>Contributors</h2>
