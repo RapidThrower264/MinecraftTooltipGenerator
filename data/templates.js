@@ -1,5 +1,5 @@
 function convertFromHTMLEntity(htmlEntity) {
-    return String.fromCharCode(parseInt(htmlEntity.replaceAll(/[&#x;]/gm, ""), 16));
+    return String.fromCodePoint(parseInt(htmlEntity.replaceAll(/[&#x;]/gm, ""), 16));
 }
 
 const TEMPLATES = [
