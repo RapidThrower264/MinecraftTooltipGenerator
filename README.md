@@ -25,6 +25,8 @@ Wanting to feel a little ***fancy***? You have the ability to add an item that s
 ![Showing the difference between 1.8.9 and 1.21 fonts](images/readme/font-versions.png)
 - 99%+ Similarity to Original Minecraft Rendering\
 <sup>(Subject to the Terms and Conditions of your Personal Standards)</sup>
+- Supports rendering some of your favorite emojis using GNU Unifont 15\
+![Demonstration of that emojis are actually working](images/readme/emojis.png)
 - Ability to add blocks, items or player heads that sit next to the generated tooltip.
     - Player heads can come from a file upload, Base64 string or a link.
     - Files that are uploaded will remain on the client's computer.
