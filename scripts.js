@@ -1742,8 +1742,8 @@ window.addEventListener("load", async (event) => {
         let data = document.getElementById("nbt-textarea").value;
         let json;
         try {
-            // order of operations for regex a) fix lists containing B, I or S. b) wrap keys with quotation marks. c) remove boolean, short, int, long, float or double for data types
-            data = data.replace(/(^\s*[a-zA-Z:_0-9]*:\s)\[[BIS];/gm, "$1[").replace(/^\s*([a-zA-Z:_0-9]*):\s/gm, '"$1": ').replace(/:\s*(-?\d+(?:\.\d+)?[bBsSlLfFdD]?)/g, ': "$1"')
+            // order of operations for regex a) fix lists containing B, I or S. b) remove any string wrapped json strings c) wrap keys with quotation marks. d) remove boolean, short, int, long, float or double for data types
+            data = data.replace(/(^\s*[a-zA-Z:_0-9]*:\s)\[[BIS];/gm, "$1[").replace(/(^\s*[a-zA-Z_0-9]*: )'[^']*'(|,)/gm, "$1\"deleted\"$2").replace(/^\s*([a-zA-Z:_0-9]*):\s/gm, '"$1": ').replace(/:\s*(-?\d+(?:\.\d+)?[bBsSlLfFdD]?)/g, ': "$1"');
             json = JSON.parse(data);
         } catch (error) {
             const errorData = createDebugInformation("jsonParsing", `Could not parse the content ${data}.`);
