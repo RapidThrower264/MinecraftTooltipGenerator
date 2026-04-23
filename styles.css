@@ -351,6 +351,10 @@ main {
     gap: 0.5em;
 }
 
+.setting-container.vertical span {
+    text-align: center;
+}
+
 .setting-hint, .setting-container span {
     max-width: 200px;
 }
