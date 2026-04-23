@@ -960,7 +960,7 @@ class Settings {
         // image settings
         this._firstLineGap = this.loadBooleanSetting("first-line-gap", false, true);
         this._renderBackground = this.loadBooleanSetting("render-background", false, true);
-        this._renderScale = this.loadNumberSetting("render-scale", true, 1, 1, 10);
+        this._renderScale = this.loadNumberSetting("render-scale", true, 2, 1, 10);
         this._fontVersion = this.loadNumberSetting("font-version", true, 0, 0, 1);
         // editor settings
         this._updatePeriod = this.loadNumberSetting("update-period", true, 2, 0, Number.MAX_SAFE_INTEGER);
