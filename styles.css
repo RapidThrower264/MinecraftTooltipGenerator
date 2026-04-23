@@ -447,7 +447,7 @@ input[type="checkbox"]:checked::after {
         border: 0.2em solid #123;
         cursor: ew-resize;
         background: #ffffff;
-        box-shadow: -10em 0 1em 9.25em var(--primary-600);
+        box-shadow: -20em 0 0.75em 19em var(--primary-600);
     }
 }
 
@@ -460,7 +460,7 @@ input[type="range"]::-moz-range-progress {
     height: 4em;
     width: 0;
     border: none;
-    box-shadow: -10em 0 1em 9.25em var(--primary-600);
+    box-shadow: -20em 0 0.75em 19em var(--primary-600);
     box-sizing: border-box;
 }
 
