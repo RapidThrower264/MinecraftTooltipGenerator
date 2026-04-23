@@ -209,6 +209,12 @@
                                         <option value="1">1.21 Fonts</option>
                                     </select>
                                 </div>
+                                <div class="setting-container vertical">
+                                    <span>Image Render Scale</span>
+                                    <input type="range" id="render-scale" class="setting" setting="render-scale" min="1" max="5" step="1" data-format="x%s Scale">
+                                    <span id="render-scale-display" class="range-display">Infinite Scale</span>
+                                    <span class="hint">Note: Image Render Scale only works with "Copy Image" and "Download Image" buttons for now</span>
+                                </div>
                             </div>
                             <h3>Editor Settings</h3>
                             <div class="setting-section">
@@ -218,7 +224,7 @@
                                     <span id="update-period-display" class="range-display">Infinite seconds</span>
                                 </div>
                                 <div class="setting-container vertical">
-                                    <span>Canvas Scale</span>
+                                    <span>Scale</span>
                                     <input type="range" id="image-scale" class="setting" setting="image-scale" min="0.5" max="3" step="0.25" data-format="x%s Scale">
                                     <span id="image-scale-display" class="range-display">Infinite Scale</span>
                                 </div>

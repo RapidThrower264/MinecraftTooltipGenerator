@@ -147,14 +147,32 @@ class MinecraftGenerator {
 
     async getImageFromCanvas(canvas) {
         return new Promise((resolve, reject) => {
-            canvas.toBlob((blob) => {
+            let targetCanvas;
+            if (this.settings.renderScale > 1) {
+                let scaledCanvas = document.createElement("canvas");
+                scaledCanvas.style.imageRendering = "pixelated";
+                scaledCanvas.width = this.settings.renderScale * canvas.width;
+                scaledCanvas.height = this.settings.renderScale * canvas.height;
+                
+                let scaledContext = scaledCanvas.getContext("2d");
+                scaledContext.imageSmoothingEnabled = false;
+                scaledContext.mozImageSmoothingEnabled = false;
+                scaledContext.oImageSmoothingEnabled = false;
+                scaledContext.webkitImageSmoothingEnabled = false;
+                scaledContext.msImageSmoothingEnabled = false;
+                scaledContext.drawImage(canvas, 0, 0, canvas.width, canvas.height, 0, 0, scaledCanvas.width, scaledCanvas.height);
+                targetCanvas = scaledCanvas;
+            } else {
+                targetCanvas = canvas;
+            }
+            targetCanvas.toBlob((blob) => {
                 if (blob) {
                     resolve(blob);
                 } else {
                     reject(new Error("Couldn't convert the canvas to a blob"));
                 }
             })
-        })
+        });
     }
 
     async copyToClipboard() {
@@ -164,7 +182,7 @@ class MinecraftGenerator {
             await navigator.clipboard.write(data);
         } catch (error) {
             const errorData = createDebugInformation("imageDownload", error)
-            createToast("error", "There was an issue trying to download the image.", "Typically, this is", "Click me to copy relevant debug data to your clipboard", errorData);
+            createToast("error", "There was an issue trying to download the image.", "Get in contact with a developer to have them sort it out.", "Click me to copy relevant debug data to your clipboard", errorData);
         }
     }
 
@@ -942,6 +960,7 @@ class Settings {
         // image settings
         this._firstLineGap = this.loadBooleanSetting("first-line-gap", false, true);
         this._renderBackground = this.loadBooleanSetting("render-background", false, true);
+        this._renderScale = this.loadNumberSetting("render-scale", true, 1, 1, 10);
         this._fontVersion = this.loadNumberSetting("font-version", true, 0, 0, 1);
         // editor settings
         this._updatePeriod = this.loadNumberSetting("update-period", true, 2, 0, Number.MAX_SAFE_INTEGER);
@@ -962,6 +981,8 @@ class Settings {
     get updatePeriod() { return this._updatePeriod.value; }
 
     get imageScale() { return this._imageScale.value; }
+
+    get renderScale() { return this._renderScale.value; }
 
     get includeDisplayItem() { return this._includeDisplayItem.value; }
 
