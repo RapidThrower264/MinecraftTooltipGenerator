@@ -104,6 +104,9 @@ const STATS = [
     {"icon":"&#x2744;","name":"cold_resistance","stat":"Cold Resistance","color":"AQUA"}
 ]},
 {"name":"Farming","stats":[
+    {"icon":"&#xD60;","name":"bonus_pest_chance","stat":"Bonus Pest Chance","color":"DARK_GREEN"},
+    {"icon":"&#x273F;","name":"sowdust","stat":"Sowdust","color":"DARK_GREEN"},
+    {"icon":"&#x2600;","name":"overbloom","stat":"Overbloom","color":"YELLOW"},
     {"icon":"&#x2618;","name":"farming_fortune","stat":"Farming Fortune","color":"GOLD"},
     {"icon":"&#x2618;","name":"wheat_fortune","stat":"Wheat Fortune","color":"GOLD"},
     {"icon":"&#x2618;","name":"carrot_fortune","stat":"Carrot Fortune","color":"GOLD"},
@@ -114,8 +117,7 @@ const STATS = [
     {"icon":"&#x2618;","name":"cactus_fortune","stat":"Cactus Fortune","color":"GOLD"},
     {"icon":"&#x2618;","name":"sugar_cane_fortune","stat":"Sugar Cane Fortune","color":"GOLD"},
     {"icon":"&#x2618;","name":"nether_wart_fortune","stat":"Nether Wart Fortune","color":"GOLD"},
-    {"icon":"&#x2618;","name":"cocoa_beans_fortune","stat":"Cocoa Beans Fortune","color":"GOLD"},
-    {"icon":"&#xD60;","name":"bonus_pest_chance","stat":"Bonus Pest Chance","color":"DARK_GREEN"}
+    {"icon":"&#x2618;","name":"cocoa_beans_fortune","stat":"Cocoa Beans Fortune","color":"GOLD"}
 ]},
 {"name":"Foraging","stats":[
     {"icon":"&#x2618;","name":"foraging_fortune","stat":"Foraging Fortune","color":"GOLD"},
