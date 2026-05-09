@@ -1319,7 +1319,7 @@ function loadStats() {
     var statReminder = document.getElementById("stat-code-reminder");
     let createStatReminders = (statContainer, stats) => {
         stats.forEach(stat => {
-            let charCode = String.fromCodePoint(parseInt(stat.icon.replaceAll(/[&#x;]/gm, ""), 16));
+            let charCode = stat.icon === "" ? "" : String.fromCodePoint(parseInt(stat.icon.replaceAll(/[&#x;]/gm, ""), 16));
             let statColor = REGISTERED_COLORS[stat.color];
             let button = createButton("stat-reminder", `${stat.icon} ${stat.stat}`, statColor, () => {
                 let insertText;
