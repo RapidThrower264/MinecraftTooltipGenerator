@@ -65,7 +65,7 @@ const STATS = [
     {"icon":"&#x2646;","name":"magmatic","stat":"Magmatic","color":"RED"},
     {"icon":"&#x273f;","name":"mythological","stat":"Mythological","color":"DARK_GREEN"},
     {"icon":"&#xd60;","name":"pest","stat":"Pest","color":"DARK_GREEN"},
-    {"icon":"&#x26e8;","name":"shielded","stat":"Shielded","color":"AQUA"},
+    {"icon":"&#x26e8;","name":"shielded","stat":"Shielded","color":"YELLOW"},
     {"icon":"&#x1f9b4;","name":"skeletal","stat":"Skeletal","color":"WHITE"},
     {"icon":"&#x263d;","name":"spooky","stat":"Spooky","color":"GOLD"},
     {"icon":"&#x2e15;","name":"subterranean","stat":"Subterranean","color":"GOLD"},
