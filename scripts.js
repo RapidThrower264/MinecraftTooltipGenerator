@@ -785,7 +785,7 @@ class Exporter {
        this.showCommandLengthWarning = showCommandLengthWarning;
     }
 
-    export(lines, data) {}
+    export(lines, data, itemDetails) {}
 
     parse(lines) {
         let loreComponents = [];
@@ -827,13 +827,16 @@ class MinecraftCommandExporter extends Exporter {
         super((content) => `[${content.join(',')}]`, undefined, undefined, true);
     }
 
-    export(lines, itemName) {
+    export(lines, itemName, itemDetails) {
         let loreComponents = this.parse(lines);
         
         let command = `/give @p ${itemName}[custom_name=[${loreComponents[0]}]`;
         if (loreComponents.length > 1) {
             loreComponents.shift();
             command += `,lore=[${loreComponents.join(",")}]`;
+        }
+        if (itemDetails.length > 0) {
+            command += ``
         }
         command += "]";
         return command;
@@ -884,7 +887,7 @@ class HTMLExporter extends Exporter {
         this.minecraftColorList = minecraftColorList;
     }
 
-    export(lines, _) {
+    export(lines, _, __) {
         let loreComponents = this.parse(lines);
         let itemHTML = `<div class="minecraft-item">\n${loreComponents.join("<br>\n")}\n</div>`;
         return itemHTML;
@@ -957,6 +960,9 @@ class Settings {
         this._displayItemSize = this.loadStringSetting("display-item-size", true, "ratio", ["ratio", "match-height", "match-width"]);
         this._itemTintLayer1 = this.loadColorSetting("item-tint-layer-1", false, "#000000");
         this._itemTintLayer2 = this.loadColorSetting("item-tint-layer-2", false, "#ffffff");
+        this._skinLoadingType = this.loadStringSetting("skin-loading-type", false, "file-skin-setting", ["file-skin-setting", "url-skin-setting", "base64-skin-setting"]);
+        this._skinURLData = this.loadTextSetting("skin-url-input", false, "");
+        this._skinBase64Data = this.loadTextSetting("skin-base64-input", false, "");
         // image settings
         this._firstLineGap = this.loadBooleanSetting("first-line-gap", false, true);
         this._renderBackground = this.loadBooleanSetting("render-background", false, true);
@@ -993,6 +999,12 @@ class Settings {
     get itemTintLayer1() { return this._itemTintLayer1.value; }
 
     get itemTintLayer2() { return this._itemTintLayer2.value; }
+
+    get skinLoadingType() { return this._skinLoadingType.value; }
+
+    get skinURLData() { return this._skinURLData.value; }
+
+    get skinBase64Data() { return this._skinBase64Data.value; }
 
     get insertIconOnly() { return this._insertIconOnly.value; }
 
@@ -1032,6 +1044,10 @@ class Settings {
 
     loadBooleanSetting(settingName, saveSetting, fallback) {
         return this.loadSetting(settingName, saveSetting, Boolean, fallback, (_) => true);
+    }
+
+    loadTextSetting(settingName, saveSetting, fallback) {
+        return this.loadSetting(settingName, saveSetting, String, fallback, (_) => true);
     }
 
     loadStringSetting(settingName, saveSetting, fallback, options) {
@@ -1840,7 +1856,17 @@ window.addEventListener("load", async (event) => {
     canvas.onRedraw.addListener(() => {
         let targetItemName = itemSearchBar.value.length == 0 ? "cobblestone" : itemSearchBar.value.toLowerCase().replaceAll(" ", "_");
         let exporter = EXPORTERS[settings.exportType];
-        let command = exporter.export(canvas.textRenderer.textContent.lines, targetItemName);
+        
+        let skinProperties = "";
+        if (targetItemName == "player_head" || targetItemName == "skull") {
+            if (settings.skinLoadingType == "url-skin-setting") {
+                console.log("It's the url one!");
+            } else if (settings.skinLoadingType == "base64-skin-setting") {
+                skinProperties = settings.skinBase64Data;
+            }
+        }
+
+        let command = exporter.export(canvas.textRenderer.textContent.lines, targetItemName, skinProperties);
         document.getElementById("minecraft-command-output").value = command;
         let tooLongMessageElement = document.getElementById("message-too-long");
         if (exporter.showCommandLengthWarning && command.length >= 255)
