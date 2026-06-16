@@ -1412,6 +1412,11 @@ function loadTemplates() {
 
 function setBase64SkinTexture(texture) {
     try {
+        settings.changeSetting("skin-base64-input", texture);
+        document.getElementById("skin-base64-input").value = texture;
+        let skinLoader = document.getElementById("skin-loading-type");
+        skinLoader.value = "base64-skin-setting";
+        skinLoader.dispatchEvent(new Event("change"));
         canvas.blockRenderer.setBase64SkinTexture(texture);
     } catch (error) {
         const errorData = createDebugInformation("base64SkinInput", `Could not load the base64 skin.`);
