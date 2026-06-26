@@ -785,7 +785,7 @@ class Exporter {
        this.showCommandLengthWarning = showCommandLengthWarning;
     }
 
-    export(lines, data) {}
+    export(lines, data, itemDetails) {}
 
     parse(lines) {
         let loreComponents = [];
@@ -827,13 +827,16 @@ class MinecraftCommandExporter extends Exporter {
         super((content) => `[${content.join(',')}]`, undefined, undefined, true);
     }
 
-    export(lines, itemName) {
+    export(lines, itemName, itemDetails) {
         let loreComponents = this.parse(lines);
         
         let command = `/give @p ${itemName}[custom_name=[${loreComponents[0]}]`;
         if (loreComponents.length > 1) {
             loreComponents.shift();
             command += `,lore=[${loreComponents.join(",")}]`;
+        }
+        if (itemDetails.length > 0) {
+            command += `,profile={properties:[{name:"textures",value:"${itemDetails}"}]}`
         }
         command += "]";
         return command;
@@ -884,7 +887,7 @@ class HTMLExporter extends Exporter {
         this.minecraftColorList = minecraftColorList;
     }
 
-    export(lines, _) {
+    export(lines, _, __) {
         let loreComponents = this.parse(lines);
         let itemHTML = `<div class="minecraft-item">\n${loreComponents.join("<br>\n")}\n</div>`;
         return itemHTML;
@@ -957,6 +960,9 @@ class Settings {
         this._displayItemSize = this.loadStringSetting("display-item-size", true, "ratio", ["ratio", "match-height", "match-width"]);
         this._itemTintLayer1 = this.loadColorSetting("item-tint-layer-1", false, "#000000");
         this._itemTintLayer2 = this.loadColorSetting("item-tint-layer-2", false, "#ffffff");
+        this._skinLoadingType = this.loadStringSetting("skin-loading-type", false, "file-skin-setting", ["file-skin-setting", "url-skin-setting", "base64-skin-setting"]);
+        this._skinURLData = this.loadTextSetting("skin-url-input", false, "");
+        this._skinBase64Data = this.loadTextSetting("skin-base64-input", false, "");
         // image settings
         this._firstLineGap = this.loadBooleanSetting("first-line-gap", false, true);
         this._renderBackground = this.loadBooleanSetting("render-background", false, true);
@@ -993,6 +999,12 @@ class Settings {
     get itemTintLayer1() { return this._itemTintLayer1.value; }
 
     get itemTintLayer2() { return this._itemTintLayer2.value; }
+
+    get skinLoadingType() { return this._skinLoadingType.value; }
+
+    get skinURLData() { return this._skinURLData.value; }
+
+    get skinBase64Data() { return this._skinBase64Data.value; }
 
     get insertIconOnly() { return this._insertIconOnly.value; }
 
@@ -1032,6 +1044,10 @@ class Settings {
 
     loadBooleanSetting(settingName, saveSetting, fallback) {
         return this.loadSetting(settingName, saveSetting, Boolean, fallback, (_) => true);
+    }
+
+    loadTextSetting(settingName, saveSetting, fallback) {
+        return this.loadSetting(settingName, saveSetting, String, fallback, (_) => true);
     }
 
     loadStringSetting(settingName, saveSetting, fallback, options) {
@@ -1186,6 +1202,8 @@ const OBFUSCATED_CHARACTER_REPLACEMENT = [
     "¬=\\-3VmÅAºöøxçJyú$7äåîT_²ü/ñÜ8âZÑô&½ªqàgÉoé£ØóXòá+ÆESR4PLD?9BhcCvUNw#èQ·LrjëuGHYF»zÄ¿ù%6ÿnK¼Oedp1ûbæ0ÇÖsM^aW52ê«",
     "Wqß1#BGN§R4PLDMZdÞ¥Fx7S0p¿8/OzKwJh2¬CgØð9n¢µþ?s±Lc^VAQuUe=%×5T¯+H£m&r_Eo\\avYbX-3jøy6÷$"
 ];
+
+const SKIN_JSON_TEMPLATE = `{"timestamp":${Date.now()},"profileId":"a99a4853fbe148eb8b9f0cf9efeb6912","profileName":"R4PlD","textures":{"SKIN":{"url" : "%s"}}}`;
 
 const BOUND_CONTROL_KEYS = {"b": BOLD.code, "i": ITALIC.code, "u": UNDERLINE.code};
 
@@ -1396,6 +1414,11 @@ function loadTemplates() {
 
 function setBase64SkinTexture(texture) {
     try {
+        settings.changeSetting("skin-base64-input", texture);
+        document.getElementById("skin-base64-input").value = texture;
+        let skinLoader = document.getElementById("skin-loading-type");
+        skinLoader.value = "base64-skin-setting";
+        skinLoader.dispatchEvent(new Event("change"));
         canvas.blockRenderer.setBase64SkinTexture(texture);
     } catch (error) {
         const errorData = createDebugInformation("base64SkinInput", `Could not load the base64 skin.`);
@@ -1445,7 +1468,11 @@ function selectItem(targetItem, tints) {
             for (let i = 0; i < categories.length; i++) {
                 categories[i].style.display = categories[i].getAttribute("category") == element.type ? "block" : "none";
             }
-            tintColorSelectors[index].querySelector(".initial").value = tints[index];
+            
+            let defaultOption = tintColorSelectors[index].querySelector(".initial");
+            defaultOption.value = tints[index];
+            defaultOption.innerHTML = "Default (#" + new Uint8Array([(tints[index] >> 16) & 0xff, (tints[index] >> 8) & 0xff, tints[index] & 0xff]).toHex() + ")"; 
+
             tintColorSelectors[index].querySelector("select").value = tints[index];
             tintColorSelectors[index].querySelector("input[type='color']").value = "#" + new Uint8Array([(tints[index] >> 16) & 0xff, (tints[index] >> 8) & 0xff, tints[index] & 0xff]).toHex();
             index++;
@@ -1640,8 +1667,9 @@ window.addEventListener("load", async (event) => {
         let optionNames = Object.keys(allOptions);
         for (const name of optionNames) {
             let element = document.createElement("option");
-            element.innerHTML = name;
-            element.value = allOptions[name];
+            let intColor = allOptions[name];
+            element.innerHTML = name + ` (#${new Uint8Array([(intColor >> 16) & 0xff, (intColor >> 8) & 0xff, intColor & 0xff]).toHex()})`;
+            element.value = intColor;
             category.appendChild(element);
         }
 
@@ -1840,7 +1868,17 @@ window.addEventListener("load", async (event) => {
     canvas.onRedraw.addListener(() => {
         let targetItemName = itemSearchBar.value.length == 0 ? "cobblestone" : itemSearchBar.value.toLowerCase().replaceAll(" ", "_");
         let exporter = EXPORTERS[settings.exportType];
-        let command = exporter.export(canvas.textRenderer.textContent.lines, targetItemName);
+        
+        let skinProperties = "";
+        if (targetItemName == "player_head" || targetItemName == "skull") {
+            if (settings.skinLoadingType == "url-skin-setting") {
+                skinProperties = window.btoa(SKIN_JSON_TEMPLATE.replace("%s", settings.skinURLData));
+            } else if (settings.skinLoadingType == "base64-skin-setting") {
+                skinProperties = settings.skinBase64Data;
+            }
+        }
+
+        let command = exporter.export(canvas.textRenderer.textContent.lines, targetItemName, skinProperties);
         document.getElementById("minecraft-command-output").value = command;
         let tooLongMessageElement = document.getElementById("message-too-long");
         if (exporter.showCommandLengthWarning && command.length >= 255)
