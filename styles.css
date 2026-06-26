@@ -484,6 +484,10 @@ input[type="file"] {
     text-align: center;
 }
 
+.option-color-select {
+    max-width: 160px;
+}
+
 .tint-color-selector {
     display: none;
 }
