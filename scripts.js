@@ -1468,7 +1468,11 @@ function selectItem(targetItem, tints) {
             for (let i = 0; i < categories.length; i++) {
                 categories[i].style.display = categories[i].getAttribute("category") == element.type ? "block" : "none";
             }
-            tintColorSelectors[index].querySelector(".initial").value = tints[index];
+            
+            let defaultOption = tintColorSelectors[index].querySelector(".initial");
+            defaultOption.value = tints[index];
+            defaultOption.innerHTML = "Default (#" + new Uint8Array([(tints[index] >> 16) & 0xff, (tints[index] >> 8) & 0xff, tints[index] & 0xff]).toHex() + ")"; 
+
             tintColorSelectors[index].querySelector("select").value = tints[index];
             tintColorSelectors[index].querySelector("input[type='color']").value = "#" + new Uint8Array([(tints[index] >> 16) & 0xff, (tints[index] >> 8) & 0xff, tints[index] & 0xff]).toHex();
             index++;
@@ -1663,8 +1667,9 @@ window.addEventListener("load", async (event) => {
         let optionNames = Object.keys(allOptions);
         for (const name of optionNames) {
             let element = document.createElement("option");
-            element.innerHTML = name;
-            element.value = allOptions[name];
+            let intColor = allOptions[name];
+            element.innerHTML = name + ` (#${new Uint8Array([(intColor >> 16) & 0xff, (intColor >> 8) & 0xff, intColor & 0xff]).toHex()})`;
+            element.value = intColor;
             category.appendChild(element);
         }
 
