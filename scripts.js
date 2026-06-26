@@ -836,7 +836,7 @@ class MinecraftCommandExporter extends Exporter {
             command += `,lore=[${loreComponents.join(",")}]`;
         }
         if (itemDetails.length > 0) {
-            command += ``
+            command += `,profile={properties:[{name:"textures",value:"${itemDetails}"}]}`
         }
         command += "]";
         return command;
@@ -1202,6 +1202,8 @@ const OBFUSCATED_CHARACTER_REPLACEMENT = [
     "¬=\\-3VmÅAºöøxçJyú$7äåîT_²ü/ñÜ8âZÑô&½ªqàgÉoé£ØóXòá+ÆESR4PLD?9BhcCvUNw#èQ·LrjëuGHYF»zÄ¿ù%6ÿnK¼Oedp1ûbæ0ÇÖsM^aW52ê«",
     "Wqß1#BGN§R4PLDMZdÞ¥Fx7S0p¿8/OzKwJh2¬CgØð9n¢µþ?s±Lc^VAQuUe=%×5T¯+H£m&r_Eo\\avYbX-3jøy6÷$"
 ];
+
+const SKIN_JSON_TEMPLATE = `{"timestamp":${Date.now()},"profileId":"a99a4853fbe148eb8b9f0cf9efeb6912","profileName":"R4PlD","textures":{"SKIN":{"url" : "%s"}}}`;
 
 const BOUND_CONTROL_KEYS = {"b": BOLD.code, "i": ITALIC.code, "u": UNDERLINE.code};
 
@@ -1865,7 +1867,7 @@ window.addEventListener("load", async (event) => {
         let skinProperties = "";
         if (targetItemName == "player_head" || targetItemName == "skull") {
             if (settings.skinLoadingType == "url-skin-setting") {
-                console.log("It's the url one!");
+                skinProperties = window.btoa(SKIN_JSON_TEMPLATE.replace("%s", settings.skinURLData));
             } else if (settings.skinLoadingType == "base64-skin-setting") {
                 skinProperties = settings.skinBase64Data;
             }
