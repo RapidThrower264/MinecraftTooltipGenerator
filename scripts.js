@@ -1306,7 +1306,8 @@ function createButton(reminderClass, buttonText, color, textInsert, specialTextI
     var reminder = document.createElement("button");
     reminder.classList.add(reminderClass);
     reminder.innerHTML = buttonText;
-    reminder.style.setProperty("--btn-color", color);
+    if (color != undefined)
+        reminder.style.setProperty("--btn-color", color);
 
     reminder.addEventListener("click", (event) => {
         textarea.focus();
@@ -1321,6 +1322,8 @@ function loadColors() {
         var button = createButton("code-reminder", color.code, color.color, () => {return "&" + color.code});
         if (color.code == "0") {
             button.style.setProperty("--color", "white");
+        } else {
+            button.style.setProperty("--color", "black");
         }
         colorReminder.appendChild(button);
     });
@@ -1328,7 +1331,7 @@ function loadColors() {
     var styleReminder = document.getElementById("formatting-codes-reminder");
     STYLES.forEach(style => {
         var text = `${style.code} : <span style="${style.style}">${style.shorthand}</span>`
-        var button = createButton("code-reminder", text, "#fff", () => {return "&" + style.code});
+        var button = createButton("code-reminder", text, undefined, () => {return "&" + style.code});
         styleReminder.appendChild(button);
     })
 }
@@ -1394,7 +1397,7 @@ function loadTemplates() {
 
     let templateContainer = document.getElementById("template-code-reminder");
     TEMPLATES.forEach(template => {
-        let button = createButton("template-reminder", template.name, "#fff", () => {
+        let button = createButton("template-reminder", template.name, undefined, () => {
             let insertText = template.description;
             let rarity = RARITIES[document.getElementById("template-item-rarity").value];
             let replacements = {
