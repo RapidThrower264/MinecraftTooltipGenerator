@@ -1,9 +1,60 @@
 :root {
+    --primary-600: rgb(44, 52, 144);
+
     --background: rgb(20, 3, 20);
     --purple-border: rgb(37, 0, 94);
+
     --window-bg: rgb(105, 105, 127);
-    --overlay-tint: rgba(207 207 209);
-    --primary-600: rgb(44, 52, 144);
+    --window-fg: rgb(80, 80, 99);
+
+    --overlay-tint: rgba(207, 207, 209);
+    --overlay-accent: rgb(221, 221, 221);
+    --overlay-border: rgb(232, 231, 233);
+
+    --button-fg: black;
+    --button-bg: white;
+    --button-shadow: rgb(119, 119, 119);
+
+    --input-border: black;
+    --input-background: white;
+    --input-accent: rgb(44, 52, 144);
+
+    --textarea-bg: white;
+    --textarea-fg: black;
+    --textarea-border: rgb(118, 118, 118);
+}
+
+@media (prefers-color-scheme: dark) {
+    :root {
+        --primary-600: rgb(31, 38, 108);
+
+        --window-bg: rgb(23, 23, 28);
+        --window-fg: rgb(50, 50, 63);
+
+        --overlay-tint: rgb(30, 30, 36);
+        --overlay-accent: rgb(91, 91, 92);
+        --overlay-border: rgb(70, 68, 73);
+
+        --button-fg: white;
+        --button-bg: rgb(20, 3, 20);
+        --button-shadow: rgb(67, 67, 67);
+
+        --input-border: rgb(203, 203, 203);
+        --input-background: rgb(62, 62, 62);
+        --input-accent: rgb(81, 91, 237);
+
+        --textarea-bg: rgb(15, 15, 18);
+        --textarea-fg: white;
+        --textarea-border:rgb(59, 59, 59);
+    }
+
+    body {
+        color: white;
+    }
+
+    textarea {
+        font-weight: 500;
+    }
 }
 
 * {
@@ -39,7 +90,7 @@ h4 {
 
 footer {
     background-color: var(--window-bg);
-    color: #505063;
+    color: var(--window-fg);
     padding: 1em 2em;
     font-size: 0.95em;
     display: flex;
@@ -48,9 +99,9 @@ footer {
 }
 
 button {
-    --btn-color: white;
+    --btn-color: var(--button-bg, white);
     
-    color: var(--color);
+    color: var(--color, var(--button-fg));
     background-color: var(--btn-color);
     
     border: 0.25em solid var(--purple-border);
@@ -59,17 +110,20 @@ button {
     font-size: 1.5em;
     text-align: center;
     cursor: pointer;
-    box-shadow: 0px 0px 3px #777;
+    box-shadow: 0px 0px 3px var(--button-shadow);
     transition: box-shadow 0.25s;
 }
 
 button:hover {
-    box-shadow: 0px 0px 20px #777;
+    box-shadow: 0px 0px 20px var(--button-shadow);
 }
 
 textarea {
-    border: 2px solid rgb(118, 118, 118);
+    padding: 6px 8px;
+    border: 2px solid var(--textarea-border);
     box-shadow: 2px 2px 10px #3e4051;
+    background-color: var(--textarea-bg);
+    color: var(--textarea-fg);
     font-size: 1em;
     margin: 1em;
 }
@@ -88,7 +142,6 @@ main {
 
 #toolbar {
     background: var(--primary-600);
-    color: white;
     border-bottom: 0.5em solid rgb(8, 18, 44);
     padding: 0.25em;
     display: flex;
@@ -138,8 +191,9 @@ main {
 }
 
 #display-item-settings canvas {
-    border: 3px solid #ddd; 
-    box-shadow: 0px 5px 10px 5px #bbb;
+    margin-top: 1em;
+    border: 3px solid var(--textarea-border); 
+    box-shadow: 0px 0px 10px 5px var(--textarea-border);
 }
 
 #js-disabled-text {
@@ -258,13 +312,12 @@ main {
     width: 6em;
     height: 6em;
     padding: 0.25em;
-    border: 0.2em solid black;
+    border: 0.2em solid var(--overlay-border);
     border-right: none;
     border-radius: 1em 0 0 1em;
-    background-color: white;
+    background-color: var(--overlay-tint);
     display: flex;
     justify-content: center;
-    overflow: hidden;
 }
 
 .icon img {
@@ -293,7 +346,7 @@ main {
 
 .relevant-items-content {
     width: 100%;
-    background-color: #ddd;
+    background-color: var(--overlay-accent);
     display: none;
     flex-direction: column;
     margin-top: 0.25em;
@@ -301,6 +354,7 @@ main {
     max-height: 300px;
     position: relative;
     gap: 0.25em;
+    border-radius: 0 0 10px 10px;
 }
 
 .searchable:focus-within .relevant-items-content {
@@ -412,14 +466,16 @@ input[type="checkbox"] {
     min-width: 2em;
     width: 2em;
     height: 2em;
-    background-color: #fff;
-    border: 0.2em solid black;
+    background-color: var(--input-background);
+    border: 0.2em solid var(--input-border);
+    border-radius: 0.2em;
+    cursor: pointer;
 }
 
 input[type="checkbox"]::after {
     content: "";
     position: absolute;
-    background-color: var(--primary-600);
+    background-color: var(--input-accent);
     inset: 0.2em;
     transform: scale(0);
     transition: transform 0.1s ease-in-out;
@@ -433,7 +489,7 @@ input[type="checkbox"]:checked::after {
     input[type="range"] {
         appearance: none;
         -webkit-appearance: none;
-        background-color: #b9b9b9;
+        background-color: var(--input-background);
     }
     
     input[type="range"]::-webkit-slider-runnable-track {
@@ -451,7 +507,7 @@ input[type="checkbox"]:checked::after {
         border: 0.2em solid #123;
         cursor: ew-resize;
         background: #ffffff;
-        box-shadow: -20em 0 0.75em 19em var(--primary-600);
+        box-shadow: -20em 0 0.75em 19em var(--input-accent);
     }
 }
 
@@ -460,11 +516,11 @@ input[type="range"]::-moz-range-track {
 }
 
 input[type="range"]::-moz-range-progress {
-    background-color: var(--primary-600); 
+    background-color: var(--input-accent); 
     height: 4em;
     width: 0;
     border: none;
-    box-shadow: -20em 0 0.75em 19em var(--primary-600);
+    box-shadow: -20em 0 0.75em 19em var(--input-accent);
     box-sizing: border-box;
 }
 
@@ -516,8 +572,8 @@ input[type="file"] {
 .stat-category {
     padding: 0.5em;
     color: var(--color);
-    background-color: #ddd;
-    border: 0.25em solid #ddd;
+    background-color: var(--overlay-accent);
+    border: 0.25em solid var(--overlay-accent);
     border-radius: 0.5em;
 }
 
