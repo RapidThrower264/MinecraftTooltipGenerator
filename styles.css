@@ -346,7 +346,6 @@ main {
 
 .relevant-items-content {
     width: 100%;
-    background-color: var(--overlay-accent);
     display: none;
     flex-direction: column;
     margin-top: 0.25em;
@@ -364,11 +363,6 @@ main {
 .searchable-item {
     padding-block: 1em;
     padding-left: 0.8em;
-    --btn-color: white;
-    
-    color: var(--color);
-    background-color: var(--btn-color);
-    
     border: none;
     border-radius: 0.5em;
     cursor: pointer;
