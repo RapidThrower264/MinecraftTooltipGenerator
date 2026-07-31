@@ -332,6 +332,12 @@ class BaseHYSBBackgroundProvider extends BackgroundProvider {
     }
 }
 
+class DefaultHYSBBackgroundProvider extends BaseHYSBBackgroundProvider {
+    constructor() {
+        super("#b1c7da", "06B88E208000");
+    }
+}
+
 class CommonHYSBBackgroundProvider extends BaseHYSBBackgroundProvider {
     constructor() {
         super("#ffffff", "03A77");
@@ -418,6 +424,7 @@ class TextGenerator {
 
         this.backgroundProviders = {
             "minecraft": new MinecraftBackgroundProvider(),
+            "default": new DefaultHYSBBackgroundProvider(),
             "common": new CommonHYSBBackgroundProvider(),
             "uncommon": new UncommonHYSBBackgroundProvider(),
             "rare": new RareHYSBBackgroundProvider(),
@@ -1153,7 +1160,7 @@ class Settings {
         // image settings
         this._firstLineGap = this.loadBooleanSetting("first-line-gap", false, true);
         this._renderBackground = this.loadBooleanSetting("render-background", false, true);
-        this._backgroundType = this.loadStringSetting("background-type", true, "common", ["minecraft", "common", "uncommon", "rare", "epic", "legendary", "mythic", "supreme", "ultimate", "admin", "special"]);
+        this._backgroundType = this.loadStringSetting("background-type", true, "common", ["minecraft", "default", "common", "uncommon", "rare", "epic", "legendary", "mythic", "supreme", "ultimate", "admin", "special"]);
         this._renderScale = this.loadNumberSetting("render-scale", true, 2, 1, 10);
         this._fontVersion = this.loadNumberSetting("font-version", true, 0, 0, 1);
         // editor settings
