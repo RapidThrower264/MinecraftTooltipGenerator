@@ -509,11 +509,6 @@ class TextGenerator {
             this.tctx.fillRect(0, 16, lineWidth, 2);
         }
         
-        // check if the image needs extending and extend it if it needs to
-        if (x + lineWidth > this.drawableWidth) {
-            this.changeCanvasSize(x + lineWidth + LEFT_OFFSET, this.height, true);
-        }
-
         return lineWidth;
     }
 
@@ -761,6 +756,7 @@ class TextManager {
     constructor(settings) {
         this.lines = [];
         this.settings = settings;
+        this.longestLine = 0;
     }
 
     get length() {
@@ -786,8 +782,13 @@ class TextManager {
 
         var currentColor = DEFAULT_COLOR;
         var styles = DEFAULT_STYLES.slice();
+        this.longestLine = 0;
         
         textLines.forEach((currentText) => {
+            if (currentText.length > this.longestLine) {
+                this.longestLine = currentText.length;
+            }
+
             let currentLine = new Line(currentColor, styles);
             let currentIndex = 0;
             let stopIndex = 0;
