@@ -277,7 +277,6 @@ class BaseHYSBBackgroundProvider extends BackgroundProvider {
         let pixelCount = 0;
         for (const hexCharacter of data) {
             let binary = 16 + parseInt(hexCharacter, 16);
-            console.log(binary - 16);
             let buffer = [];
             while (pixelCount < (this.size * this.size) && binary > 1) {
                 buffer.push(binary & 1);
