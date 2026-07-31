@@ -218,6 +218,181 @@ class MinecraftGenerator {
     }
 }
 
+class BackgroundProvider {
+    constructor(backgroundColor, borderColor, leftOffset, topOffset, data) {
+        this.backgroundColor = backgroundColor;
+        this.borderColor = borderColor;
+        this.leftOffset = leftOffset;
+        this.topOffset = topOffset;
+
+        this._cornerImages = new Array(4);
+        this._createCorners(data);
+    }
+
+    _createCorners(data) {}
+
+    drawBackground(ctx, width, height) {}
+}
+
+class MinecraftBackgroundProvider extends BackgroundProvider {
+    constructor() {
+        super("#140314", "#ffffff", 4 * dpi + spacing, 4 * dpi + spacing);
+    }
+
+    drawBackground(ctx, width, height) {
+        // drawing the main background
+        ctx.fillStyle = this.backgroundColor;
+        ctx.fillRect(spacing, spacing, width - spacing * 2, height - spacing * 2);
+
+        // punching out the corners
+        let corners = [
+            [spacing, spacing], 
+            [width - spacing * 2, spacing], 
+            [width - spacing * 2, height - spacing * 2],
+            [spacing, height - spacing * 2]
+        ]
+        corners.forEach(element => ctx.clearRect(element[0], element[1], dpi, dpi));
+
+        // drawing the purple border
+        ctx.strokeStyle = borderColor;
+        ctx.lineWidth = dpi;
+        let imageSpacing = spacing + dpi * 1.5;
+        ctx.strokeRect(imageSpacing, imageSpacing, width - imageSpacing * 2, height - imageSpacing * 2);
+    }
+}
+
+class BaseHYSBBackgroundProvider extends BackgroundProvider {
+    constructor(borderColor, cornerData) {
+        super("#051022", borderColor, 8 * dpi + spacing, 8 * dpi + spacing, cornerData);
+    }
+
+    _createCorners(data) {
+        this.size = parseInt(data.substring(0, 2), 16);
+        data = data.substring(2);
+
+        let cornerCanvas = new OffscreenCanvas(this.size * dpi, this.size * dpi);
+        let cornerCtx = cornerCanvas.getContext("2d");
+
+        let cornerData = [];
+        let pixelCount = 0;
+        for (const hexCharacter of data) {
+            let binary = 16 + parseInt(hexCharacter, 16);
+            console.log(binary - 16);
+            let buffer = [];
+            while (pixelCount < (this.size * this.size) && binary > 1) {
+                buffer.push(binary & 1);
+                binary >>= 1;
+                pixelCount++;
+            }
+
+            for (let i = buffer.length - 1; i >= 0; i--) {
+                cornerData.push(buffer[i]);
+            }
+        }
+        
+        for (let corner = 0; corner < 4; corner++) {
+            // painting the background
+            cornerCtx.fillStyle = this.backgroundColor;
+            cornerCtx.fillRect(0, 0, cornerCanvas.width, cornerCanvas.height);
+            cornerCtx.fillStyle = this.borderColor;
+
+            // creates new images for each corner's border, reversing the order as required
+            for (let i = 0; i < cornerData.length; i++) {
+                if (cornerData[i] == 1) {
+                    let x = i % this.size;
+                    let y = Math.floor(i / this.size);
+                    cornerCtx.fillRect((corner % 2 == 0 ? x : this.size - x - 1) * dpi, (Math.floor(corner / 2) == 0 ? y : this.size - y - 1) * dpi, dpi, dpi);
+                }
+            }
+
+            this._cornerImages[corner] = cornerCanvas.transferToImageBitmap();
+        }
+    }
+
+    drawBackground(ctx, width, height) {
+        // drawing the main background
+        ctx.fillStyle = this.backgroundColor;
+        ctx.fillRect(spacing, spacing, width - spacing * 2, height - spacing * 2);
+
+        ctx.strokeStyle = this.borderColor;
+        ctx.lineWidth = dpi;
+        let borderSpacing = spacing * 2;
+        ctx.strokeRect(borderSpacing + 1, borderSpacing + 1, width - (borderSpacing + 1) * 2, height - (borderSpacing + 1) * 2);
+    
+        let borderSizeOffset = borderSpacing + this.size * dpi;
+        var corners = [
+            [borderSpacing, borderSpacing], 
+            [width - borderSizeOffset, borderSpacing], 
+            [borderSpacing, height - borderSizeOffset],
+            [width - borderSizeOffset, height - borderSizeOffset],
+            
+        ]
+        corners.forEach((element, index) => {
+            ctx.drawImage(this._cornerImages[index], element[0], element[1]);
+        });
+    }
+}
+
+class CommonHYSBBackgroundProvider extends BaseHYSBBackgroundProvider {
+    constructor() {
+        super("#ffffff", "03A77");
+    }
+}
+
+class UncommonHYSBBackgroundProvider extends BaseHYSBBackgroundProvider {
+    constructor() {
+        super("#21ff2a", "05B9790C0");
+    }
+}
+
+class RareHYSBBackgroundProvider extends BaseHYSBBackgroundProvider {
+    constructor() {
+        super("#459bff", "05B97B0E0");
+    }
+}
+
+class EpicHYSBBackgroundProvider extends BaseHYSBBackgroundProvider {
+    constructor() {
+        super("#a335ee", "06BCAEE0E28");
+    }
+}
+
+class LegendaryHYSBBackgroundProvider extends BaseHYSBBackgroundProvider {
+    constructor() {
+        super("#ffa216", "09BF943BB00E05028100A00");
+    }
+}
+
+class MythicHYSBBackgroundProvider extends BaseHYSBBackgroundProvider {
+    constructor() {
+        super("#ff55ff", "09BF953BB00E05038100A00");
+    }
+}
+
+class SupremeHYSBBackgroundProvider extends BaseHYSBBackgroundProvider {
+    constructor() {
+        super("#55ffff", "0CBFF2A0EED800E00A00E00800A00A00800A000");
+    }
+}
+
+class UltimateHYSBBackgroundProvider extends BaseHYSBBackgroundProvider {
+    constructor() {
+        super("#d13228", "13BFFFE54283BBDEC2000EC00170003800040000A00014000280007000080001C0002800050000A00010000280000");
+    }
+}
+
+class AdminHYSBBackgroundProvider extends BaseHYSBBackgroundProvider {
+    constructor() {
+        super("#d13228", "03A77");
+    }
+}
+
+class SpecialHYSBBackgroundProvider extends BaseHYSBBackgroundProvider {
+    constructor() {
+        super("#ff5555", "03A77");
+    }
+}
+
 class TextGenerator {
     constructor(settings) {
         this.textContent = new TextManager(settings);
@@ -242,17 +417,37 @@ class TextGenerator {
         this.octx = obfuscatedCanvas.ctx;
         this.octx.fillStyle = "white";
 
-        this.changeCanvasSize((LEFT_OFFSET) * 2, (TOP_OFFSET) * 2 + FONT_SIZE, false);
+        this.backgroundProviders = {
+            "minecraft": new MinecraftBackgroundProvider(),
+            "common": new CommonHYSBBackgroundProvider(),
+            "uncommon": new UncommonHYSBBackgroundProvider(),
+            "rare": new RareHYSBBackgroundProvider(),
+            "epic": new EpicHYSBBackgroundProvider(),
+            "legendary": new LegendaryHYSBBackgroundProvider(),
+            "mythic": new MythicHYSBBackgroundProvider(),
+            "supreme": new SupremeHYSBBackgroundProvider(),
+            "ultimate": new UltimateHYSBBackgroundProvider(),
+            "admin": new AdminHYSBBackgroundProvider(),
+            "special": new SpecialHYSBBackgroundProvider()
+        }
+        this.bgProvider = this.backgroundProviders[this.settings.backgroundType];
+
+        this.changeCanvasSize((this.bgProvider.leftOffset) * 2, (this.bgProvider.topOffset) * 2 + FONT_SIZE, false);
 
         this.colors = null;
         this.obfuscatedSegments = null;
 
         this.isValid = true;
+
+        this.settings.getCallback("background-type").addListener((value) => {
+            this.bgProvider = this.backgroundProviders[value];
+            this.isValid = false;
+        });
     }
 
     convertLineToYCoord(yValue) {
         // converts a specific line into a Y value on the image, adjusting for if the first line gap is needed
-        return TOP_OFFSET + yValue * LINE_HEIGHT + ((yValue > 0 && this.settings.firstLineGap) ? 2 * dpi : 0);
+        return this.bgProvider.topOffset + yValue * LINE_HEIGHT + ((yValue > 0 && this.settings.firstLineGap) ? 2 * dpi : 0);
     }
 
     drawText(text, x, styles) {
@@ -388,42 +583,25 @@ class TextGenerator {
             return;
         }
 
-        // drawing the main background
-        this.ctx.fillStyle = backgroundColor;
-        this.ctx.fillRect(spacing, spacing, this.width - spacing * 2, this.height - spacing * 2);
-
-        // punching out the corners
-        var corners = [
-            [spacing, spacing], 
-            [this.width - spacing * 2, spacing], 
-            [this.width - spacing * 2, this.height - spacing * 2],
-            [spacing, this.height - spacing * 2]
-        ]
-        corners.forEach(element => this.ctx.clearRect(element[0], element[1], dpi, dpi));
-
-        // drawing the purple border
-        this.ctx.strokeStyle = borderColor;
-        this.ctx.lineWidth = dpi;
-        var imageSpacing = spacing + dpi * 1.5;
-        this.ctx.strokeRect(imageSpacing, imageSpacing, this.width - imageSpacing * 2, this.height - imageSpacing * 2);
+        this.bgProvider.drawBackground(this.ctx, this.width, this.height);
     }
 
     changeCanvasSize(width, height, saveData) {
         if (saveData) {
-            var savedData = this.ctx.getImageData(LEFT_OFFSET, TOP_OFFSET, 
-                Math.min(this.width, width) - LEFT_OFFSET * 2 + dpi, 
-                Math.min(this.height, height) - TOP_OFFSET * 2 + dpi * 2);
+            var savedData = this.ctx.getImageData(this.bgProvider.leftOffset, this.bgProvider.topOffset, 
+                Math.min(this.width, width) - this.bgProvider.leftOffset * 2 + dpi, 
+                Math.min(this.height, height) - this.bgProvider.topOffset * 2 + dpi * 2);
         }
 
         this.canvas.width = width;
         this.canvas.height = height;
         this.width = width;
         this.height = height;
-        this.drawableWidth = width - LEFT_OFFSET;
+        this.drawableWidth = width - this.bgProvider.leftOffset;
 
         this.drawBackground();
         if (saveData) {
-            this.ctx.putImageData(savedData, LEFT_OFFSET, TOP_OFFSET);
+            this.ctx.putImageData(savedData, this.bgProvider.leftOffset, this.bgProvider.topOffset);
         }
     }
 
@@ -438,6 +616,7 @@ class TextGenerator {
     initialiseGif() {
         let data = this.textContent.getSegmentData();
         this.colors = data[0];
+        this.colors.push(this.bgProvider.backgroundColor, this.bgProvider.borderColor);
         this.obfuscatedSegments = data[1];
 
         this.obfuscatedCanvas.width = this.canvas.width;
@@ -467,7 +646,7 @@ class TextGenerator {
             right = Math.max(segment.x + segment.width, right);
         });
 
-        this.octx.fillStyle = backgroundColor;
+        this.octx.fillStyle = this.bgProvider.backgroundColor;
         while (true) {
             this.obfuscatedSegments.forEach(segment => {
                 if (this.settings.renderBackground)
@@ -490,25 +669,38 @@ class TextGenerator {
     
         await this.textContent.splitText(this.text);
         
-        let height = this.convertLineToYCoord(this.textContent.lines.length - 1) + FONT_SIZE + TOP_OFFSET;
-        this.changeCanvasSize(LEFT_OFFSET * 2, height, false);
+        let height = this.convertLineToYCoord(this.textContent.lines.length - 1) + FONT_SIZE + this.bgProvider.topOffset;
+        this.changeCanvasSize(this.bgProvider.leftOffset * 2 + this.textContent.longestLine * 18, height, false);
+        let maxLineLength = 0;
         // iterate over all the lines, drawing each section based on it's color
         this.textContent.lines.forEach((line, index) => {
             let y = this.convertLineToYCoord(index);
             let segments = line.segments;
+            let x = this.bgProvider.leftOffset;
             
             for (let i = 0; i < line.length; i++) {
                 let segment = segments[i];
                 if (!segment.isValid) {
+                    segment.x = x;
                     segment.y = y;
                     const width = this.renderText(segment.text, segment.x, segment.y, segment);
+                    segment.width = width;
                     if (i + 1 < segments.length && segment.x + width != segments[i + 1].x) {
                         segments[i + 1].x = segment.x + width;
                         segments[i + 1].isValid = false;
                     }
                 }
+                x = segment.x + segment.width;
+            }
+
+            let lastSegment = segments[segments.length - 1];
+            if (maxLineLength < lastSegment.x + lastSegment.width) {
+                maxLineLength = lastSegment.x + lastSegment.width;
             }
         });
+
+        // crops the background to the size of the longest line
+        this.changeCanvasSize(maxLineLength + this.bgProvider.leftOffset, height, true);
 
         this.isValid = true;
     }
@@ -655,7 +847,7 @@ class TextManager {
     }
 
     getSegmentData() {
-        let colors = new Set(["transparent", backgroundColor, borderColor]);
+        let colors = new Set(["transparent"]);
         let obfuscatedSegments = new Array();
         
         this.lines.forEach((line) => {
@@ -691,7 +883,7 @@ class TextManager {
 
 class Line {
     constructor(color, styles=DEFAULT_STYLES) {
-        this.x = LEFT_OFFSET;
+        this.x = 0;
         this.lineSegments = [new LineSegment("", color, styles)];
     }
 
@@ -701,10 +893,6 @@ class Line {
 
     get segments() {
         return this.lineSegments;
-    }
-
-    moveXPos(amount) {
-        this.x += amount;
     }
 
     add(segment) {
@@ -725,8 +913,7 @@ class Line {
 class LineSegment {
     constructor(text, color, styles) {
         this.text = text;
-
-        this.x = LEFT_OFFSET;
+        this.x = 0;
         
         this.color = color;
         this.setStyles(styles);
@@ -966,6 +1153,7 @@ class Settings {
         // image settings
         this._firstLineGap = this.loadBooleanSetting("first-line-gap", false, true);
         this._renderBackground = this.loadBooleanSetting("render-background", false, true);
+        this._backgroundType = this.loadStringSetting("background-type", true, "common", ["minecraft", "common", "uncommon", "rare", "epic", "legendary", "mythic", "supreme", "ultimate", "admin", "special"]);
         this._renderScale = this.loadNumberSetting("render-scale", true, 2, 1, 10);
         this._fontVersion = this.loadNumberSetting("font-version", true, 0, 0, 1);
         // editor settings
@@ -979,6 +1167,8 @@ class Settings {
     }
 
     get firstLineGap() { return this._firstLineGap.value; }
+
+    get backgroundType() { return this._backgroundType.value; }
 
     get renderBackground() { return this._renderBackground.value; }
 
@@ -1248,11 +1438,7 @@ var canvas;
 
 var dpi = 2;
 var spacing = 2;
-var backgroundColor = "#140314";
 var borderColor = "#25005e";
-
-var TOP_OFFSET = 4 * dpi + spacing;
-var LEFT_OFFSET = 4 * dpi + spacing;
 
 var FONT_SIZE = parseInt(16 * dpi * 0.5);
 var LINE_HEIGHT = FONT_SIZE + dpi * 2;
