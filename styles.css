@@ -563,6 +563,16 @@ input[type="file"] {
     background-color: var(--background);
 }
 
+.stat-icon {
+    background-image: url("images/hysb_icons.png");
+    width: 16px;
+    height: 16px;
+    display: inline-block;
+    background-position: right var(--x) bottom var(--y);
+    transform: scale(2, 2);
+    margin-right: 10px;
+}
+
 .stat-category {
     padding: 0.5em;
     color: var(--color);
