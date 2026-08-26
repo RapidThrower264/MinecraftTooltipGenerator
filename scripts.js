@@ -1535,7 +1535,16 @@ function loadStats() {
         stats.forEach(stat => {
             let charCode = stat.icon === "" ? "" : String.fromCodePoint(parseInt(stat.icon.replaceAll(/[&#x;]/gm, ""), 16));
             let statColor = REGISTERED_COLORS[stat.color];
-            let button = createButton("stat-reminder", `${stat.icon} ${stat.stat}`, statColor, () => {
+            
+            let textInsert;
+            if (stat.icon.includes("&#xe0")) {
+                let unicodeCell = parseInt(stat.icon.substring(5, 7), 16);
+                textInsert = `<span class="stat-icon" style="--x: ${(1 + unicodeCell % 16) * 16}px; --y: ${Math.floor(unicodeCell / 16 + 1) * 16}px;"></span> ${stat.stat}`;
+            }
+            else {
+                textInsert = `${stat.icon} ${stat.stat}`;
+            }
+            let button = createButton("stat-reminder", textInsert, statColor, () => {
                 let insertText;
                 let formatCode = settings.preferSectionSymbol ? "§" : "&";
                 if (settings.insertIconOnly) {
