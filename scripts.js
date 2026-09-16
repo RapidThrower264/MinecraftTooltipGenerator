@@ -242,8 +242,6 @@ class BackgroundProviderManager {
         option.value = name;
         option.innerHTML = name;
         selectBox.appendChild(option);
-
-        console.log(provider);
         this.providers[name] = provider;
     }
 
@@ -1474,7 +1472,6 @@ class GlyphManager {
     }
 
     loadPage(fontVersion, page) {
-        console.log(`Attempting to load ${fontVersion} with page ${page}`);
         let widths = new Array(256);
         let fontImage = new Image();
         fontImage.crossOrigin = "anonymous";
@@ -1527,9 +1524,7 @@ class GlyphManager {
                     let foundPixel = false;
                     while (!foundPixel && glyphX > x * spriteWidth - 1) {
                         for (let glyphY = y * spriteHeight; glyphY < (y + 1) * spriteHeight; glyphY++) {
-                            // console.log(`Checking ${glyphX}/${glyphY}`);
                             let pixel = ((glyphY * imageWidth) + glyphX) * 4;
-                            // console.log(imageData.slice(pixel, pixel + 4));
                             if (imageData[pixel] > 0 || imageData[pixel + 1] > 0 || imageData[pixel + 2] > 0 || imageData[pixel + 3]) {
                                 foundPixel = true;
                                 break;
@@ -2306,9 +2301,6 @@ window.addEventListener("load", async (event) => {
     settings.getCallback("export-type").invoke(settings.getSetting("export-type"));
     
     await canvas.redrawImage();
-
-    console.log(canvas, canvas.textRenderer);
-    // await get_files();
 });
 
 function copyToClipboard() {
@@ -2372,8 +2364,6 @@ async function load_texture_pack() {
         foundFiles.addNode(file.webkitRelativePath, file);
     }
 
-    console.log(foundFiles.tree);
-
     let rootFolderName = entries[0].webkitRelativePath.substring(0, entries[0].webkitRelativePath.indexOf("/"));
     let packLocations = foundFiles.getNode(rootFolderName + "/pack_locations.json");
     let packLocationData = await readTextFile(packLocations);
@@ -2394,10 +2384,8 @@ async function load_texture_pack() {
         let createdBorders = {};
 
         let items = foundFiles.getNode(rootFolderName + "/" + packLocationData["borders"]);
-        console.log(items);
         for (const file of Object.keys(items)) {
             let type = file.replaceAll(/\.mcmeta|_background|_frame|\.png/gm, "");
-            console.log(type);
             if (type in createdBorders) {
                 console.log("Already created " + type);
                 continue;
@@ -2426,7 +2414,7 @@ async function load_texture_pack() {
                 console.log("Couldn't Find Background Image " + backgroundFileName)
                 continue;
             }
-            console.log("TYPE!" + type)
+
             let frameImage = await readImageFile(items[frameImageFileName]);
             let frameSettings = await readTextFile(items[frameSettingsFileName]);
             let backgroundImage = await readImageFile(items[backgroundFileName]);
@@ -2434,85 +2422,9 @@ async function load_texture_pack() {
 
             let backgroundProvider = new ImageProvider(frameImage, frameSettings, backgroundImage, backgroundSettings);
             BACKGROUND_PROVIDER.addProvider(type, backgroundProvider);
-            console.log(backgroundProvider);
             createdBorders[type] = 1;
         }
     }
-}
-
-let number = 0;
-
-async function get_files() {
-    // await load_texture_pack();
-    // number++;
-
-    // if (number < 1) {
-    //     return;
-    // } 
-
-
-    // let backgroundImage = document.getElementById("uncommon-border");
-    // console.log(backgroundImage);
-    // canvas.textRenderer.backgroundProviders["rare"] = new ImageProvider(backgroundImage, {
-    // "gui": {
-    //     "scaling": {
-    //         "border": {
-    //             "bottom": 12,
-    //             "left": 10,
-    //             "right": 10,
-    //             "top": 12
-    //         },
-    //         "height": 144,
-    //         "stretch_inner": true,
-    //         "type": "nine_slice",
-    //         "width": 144
-    //     }
-    // }
-// })
-    // canvas.textRenderer.bgProvider = canvas.textRenderer.backgroundProviders["rare"]
-
-
-    // GLYPHS.loadCustomPage({"type": "bitmap",
-    //         "file": "stabled:unicode/mouse_clicks.png",
-    //         "height": 8,
-    //         "ascent": 8,
-    //         "chars": [
-    //             "\ue217",
-    //             "\ue218",
-    //             "\ue219"
-    //         ]
-    //     }, document.getElementById("mouse-testing"));
-    // // GLYPHS.loadCustomPage({
-    //         "type": "bitmap",
-    //         "file": "stabled:unicode/tag/rarity/epic.png",
-    //         "height": 9,
-    //         "ascent": 7,
-    //         "chars": [
-    //             "\ue270"
-    //         ]
-    //     }, document.getElementById("epic-testing"));
-    
-    
-    
-    
-    // let fontDetails = document.getElementById("font-json").files;
-    // let entries = document.getElementById("target-font").files;
-    // let thing = await readTextFile(fontDetails[0]);
-    // // console.log(thing);
-    // // console.log("!!!!!!!!!!!!!");
-
-    // // crawl through all of the provider files
-    // let foundFiles = {};
-    // for (const file of entries) {
-    //     foundFiles[file.webkitRelativePath] = file;
-    // }
-
-    // for (const provider of thing.providers) {
-    //     if (provider.type == "bitmap") {
-    //         let result = await readImageFile(foundFiles["assets/" + provider.file.replace(/:/, "/textures/")]);
-    //         GLYPHS.loadCustomPage(provider, result);
-    //     }
-    // }
 }
 
 function readTextFile(file) {
@@ -2545,33 +2457,4 @@ function readImageFile(file) {
         }
         reader.readAsDataURL(file);
     });
-}
-
-function convertToBits(bits) {
-    let fakeCanvas = document.createElement("canvas");
-    fakeCanvas.width = 16;
-    fakeCanvas.height = 16;
-    
-    let fakeCTX = fakeCanvas.getContext("2d");
-    let testData = fakeCTX.getImageData(0, 0, 16, 16);
-
-    let dataArray = testData.data;
-
-    let pixelCoord = 0;
-    for (let i = 0; i < bits.length; i++) {
-        let section = parseInt(bits[i], 16).toString(2).padStart(4, "0");
-        
-        for (const character of section) {
-            if (character == "1") {
-                dataArray[pixelCoord] = 255;
-                dataArray[pixelCoord + 1] = 255;
-                dataArray[pixelCoord + 2] = 255;
-                dataArray[pixelCoord + 3] = 255;
-            }
-
-            pixelCoord += 4;
-        }
-    }
-    fakeCTX.putImageData(testData, 0, 0);
-    document.body.appendChild(fakeCanvas);
 }
