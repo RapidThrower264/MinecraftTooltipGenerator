@@ -301,6 +301,14 @@
                             <p>This is not an Official Minecraft Product or Service. Merely a recreation of the original. This isn't approved or associated with Mojang, Microsoft or Hypixel.</p>
                         </div>
                     </div>
+                    <div id="experimental-overlay" class="overlay">
+                        <h2>Experimental Settings</h2>
+                        <p>These settings are extremely experimental. I have no idea as to their state or how much they are even working...</p>
+                        <input id="texture-pack-upload" type="file" webkitdirectory directory multiple/>
+                        <button onclick="load_texture_pack()">Do Thing!</button>
+                        <h3>Found Icons!</h3>
+                        <div id="found-icons"></div>
+                    </div>
                     <div id="icons">
                         <div id="icon-wrapper">
                             <a id="menu-toggle" class="icon overlay-btn menu-toggle"><img src="images/menu.png" alt="Pixel Art Paint brush and paint palette" style="--shadow-color: #c19e81;"></a>
@@ -312,6 +320,7 @@
                                     <a class="icon overlay-btn" data-overlay="item-display-overlay"><img src="images/grass_block.png" alt="Minecraft Dirt Block" style="--shadow-color: #4edf15;"></a>
                                     <a class="icon overlay-btn" data-overlay="settings-overlay"><img src="images/settings.png" alt="Pixel Art of a Gear" style="--shadow-color: #696c76;"></a>
                                     <a class="icon overlay-btn" data-overlay="io-overlay"><img src="images/exporting.png" alt="Pixel Art of a Share Button" style="--shadow-color: #38a4cf;"></a>
+                                    <a class="icon overlay-btn" data-overlay="experimental-overlay"><img src="images/exporting.png" alt="Unknown Right Now..." style="--shadow-color: #38a4cf;"></a>
                                     <a class="icon overlay-btn" data-overlay="credits-overlay"><img src="images/credits.png" alt="Minecraft Glyph of a Heart" style="--shadow-color: #cc3333;"></a>
                                 </div>
                             </div>

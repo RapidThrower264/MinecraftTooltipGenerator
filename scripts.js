@@ -218,8 +218,112 @@ class MinecraftGenerator {
     }
 }
 
+class BackgroundProviderManager {
+    constructor() {
+        this.providers = {
+            "minecraft": new MinecraftBackgroundProvider(),
+            "default": new DefaultHYSBBackgroundProvider(),
+            "common": new CommonHYSBBackgroundProvider(),
+            "uncommon": new UncommonHYSBBackgroundProvider(),
+            "rare": new RareHYSBBackgroundProvider(),
+            "epic": new EpicHYSBBackgroundProvider(),
+            "legendary": new LegendaryHYSBBackgroundProvider(),
+            "mythic": new MythicHYSBBackgroundProvider(),
+            "supreme": new SupremeHYSBBackgroundProvider(),
+            "ultimate": new UltimateHYSBBackgroundProvider(),
+            "admin": new AdminHYSBBackgroundProvider(),
+            "special": new SpecialHYSBBackgroundProvider()
+        };
+    }
+
+    addProvider(name, provider) {
+        let selectBox = document.getElementById("background-type");
+        let option = document.createElement("option");
+        option.value = name;
+        option.innerHTML = name;
+        selectBox.appendChild(option);
+
+        console.log(provider);
+        this.providers[name] = provider;
+    }
+
+    getProvider(providerName) {
+        return this.providers[providerName] ?? this.providers["default"];
+    }
+}
+
 class BackgroundProvider {
+    constructor() {}
+
+    drawBackground(ctx, width, height) {}
+}
+
+class ImageProvider extends BackgroundProvider { 
+    constructor(image, provider, background, backgroundProvider) {
+        super();
+
+        this.image = image;
+        this.borderProvider = {
+            top: provider.gui.scaling.border.top ?? provider.gui.scaling.border,
+            right: provider.gui.scaling.border.right ?? provider.gui.scaling.border,
+            bottom: provider.gui.scaling.border.bottom ?? provider.gui.scaling.border,
+            left: provider.gui.scaling.border.left ?? provider.gui.scaling.border
+        };
+
+        this.topOffset = this.borderProvider.top * 2;
+        this.leftOffset = this.borderProvider.left * 2;
+        this.stretchedWidth = image.width - this.borderProvider.left - this.borderProvider.right;
+        this.stretchedHeight = image.height - this.borderProvider.top - this.borderProvider.bottom;
+        
+        this.backgroundImage = background;
+        this.backgroundProvider = {
+            top: backgroundProvider.gui.scaling.border.top ?? backgroundProvider.gui.scaling.border,
+            right: backgroundProvider.gui.scaling.border.right ?? backgroundProvider.gui.scaling.border,
+            bottom: backgroundProvider.gui.scaling.border.bottom ?? backgroundProvider.gui.scaling.border,
+            left: backgroundProvider.gui.scaling.border.left ?? backgroundProvider.gui.scaling.border
+        };
+    }
+
+    drawBackground(ctx, width, height) {
+        this.drawFrameBackground(ctx, width, height, this.backgroundImage, this.backgroundProvider.top, this.backgroundProvider.right, this.backgroundProvider.bottom, this.backgroundProvider.left);
+        this.drawFrameBorder(ctx, width, height, this.image, this.borderProvider.top, this.borderProvider.right, this.borderProvider.bottom, this.borderProvider.left);
+    }
+
+    drawFrameBackground(ctx, width, height, image, top, right, bottom, left) {
+        ctx.drawImage(image, left, top, image.width - left - right, image.height - top - bottom,
+            left, top - dpi, width - (left + right), height - (top + bottom) + dpi * 2);
+    }
+
+    drawFrameBorder(ctx, width, height, image, top, right, bottom, left) {
+        // drawing the corners
+        let sourceRight = image.width - right; 
+        let targetRight = width - right * 2;
+        let sourceBottom = image.height - bottom;
+        let targetBottom = height - bottom * 2;
+
+        ctx.drawImage(image, 0, 0, left, top, 
+            0, 0, left * 2, top * 2);
+        ctx.drawImage(image, sourceRight, 0, right, top, 
+            targetRight, 0, right * 2, top * 2);
+        ctx.drawImage(image, 0, sourceBottom, left, bottom, 
+            0, targetBottom, left * 2, bottom * 2);
+        ctx.drawImage(image, sourceRight, sourceBottom, right, bottom, 
+            targetRight, targetBottom, left * 2, bottom * 2);
+
+        ctx.drawImage(image, left, 0, this.stretchedWidth, top, 
+            left * 2, 0, width - (left + right) * 2, top * 2);
+        ctx.drawImage(image, left, sourceBottom, this.stretchedWidth, bottom, 
+            left * 2, targetBottom, width - (left + right) * 2, bottom * 2);
+        ctx.drawImage(image, 0, top, left, this.stretchedHeight,
+            0, top * 2, left * 2, height - (top + bottom) * 2);
+        ctx.drawImage(image, sourceRight, top, right, this.stretchedHeight,
+            targetRight, top * 2, right * 2, height - (top + bottom) * 2);
+    }
+}
+
+class StaticBackgroundProvider extends BackgroundProvider {
     constructor(backgroundColor, borderColor, leftOffset, topOffset, data) {
+        super();
         this.backgroundColor = backgroundColor;
         this.borderColor = borderColor;
         this.leftOffset = leftOffset;
@@ -230,11 +334,9 @@ class BackgroundProvider {
     }
 
     _createCorners(data) {}
-
-    drawBackground(ctx, width, height) {}
 }
 
-class MinecraftBackgroundProvider extends BackgroundProvider {
+class MinecraftBackgroundProvider extends StaticBackgroundProvider {
     constructor() {
         super("#140314", "#ffffff", 4 * dpi + spacing, 4 * dpi + spacing);
     }
@@ -261,7 +363,7 @@ class MinecraftBackgroundProvider extends BackgroundProvider {
     }
 }
 
-class BaseHYSBBackgroundProvider extends BackgroundProvider {
+class BaseHYSBBackgroundProvider extends StaticBackgroundProvider {
     constructor(borderColor, cornerData) {
         super("#051022", borderColor, 8 * dpi + spacing, 8 * dpi + spacing, cornerData);
     }
@@ -408,12 +510,22 @@ class TextGenerator {
         this.settings = settings;
         this.text = "";
 
+        let baseCanvas = createCanvas(null);
+        this.baseCanvas = baseCanvas.canvas;
+        this.baseCanvas.width = 1000;
+        this.baseCanvas.height = 100;
+        this.bctx = baseCanvas.ctx;
+        this.bctx.imageSmoothingEnabled = false;
+        document.body.appendChild(this.baseCanvas);
+
         let textCanvas = createCanvas(null);
         this.textCanvas = textCanvas.canvas;
         this.textCanvas.width = 1000;
         this.textCanvas.height = 100;
         this.tctx = textCanvas.ctx;
         this.tctx.fillStyle = "white";
+        this.tctx.imageSmoothingEnabled = false;
+        document.body.appendChild(this.textCanvas);
 
         let obfuscatedCanvas = createCanvas(null);
         this.obfuscatedCanvas = obfuscatedCanvas.canvas;
@@ -422,21 +534,8 @@ class TextGenerator {
         this.octx = obfuscatedCanvas.ctx;
         this.octx.fillStyle = "white";
 
-        this.backgroundProviders = {
-            "minecraft": new MinecraftBackgroundProvider(),
-            "default": new DefaultHYSBBackgroundProvider(),
-            "common": new CommonHYSBBackgroundProvider(),
-            "uncommon": new UncommonHYSBBackgroundProvider(),
-            "rare": new RareHYSBBackgroundProvider(),
-            "epic": new EpicHYSBBackgroundProvider(),
-            "legendary": new LegendaryHYSBBackgroundProvider(),
-            "mythic": new MythicHYSBBackgroundProvider(),
-            "supreme": new SupremeHYSBBackgroundProvider(),
-            "ultimate": new UltimateHYSBBackgroundProvider(),
-            "admin": new AdminHYSBBackgroundProvider(),
-            "special": new SpecialHYSBBackgroundProvider()
-        }
-        this.bgProvider = this.backgroundProviders[this.settings.backgroundType];
+        this.backgroundProviders = BACKGROUND_PROVIDER;
+        this.bgProvider = this.backgroundProviders.getProvider(this.settings.backgroundType);
 
         this.changeCanvasSize((this.bgProvider.leftOffset) * 2, (this.bgProvider.topOffset) * 2 + FONT_SIZE, false);
 
@@ -446,7 +545,7 @@ class TextGenerator {
         this.isValid = true;
 
         this.settings.getCallback("background-type").addListener((value) => {
-            this.bgProvider = this.backgroundProviders[value];
+            this.bgProvider = this.backgroundProviders.getProvider(value);
             this.isValid = false;
         });
     }
@@ -458,36 +557,25 @@ class TextGenerator {
 
     drawText(text, x, styles) {
         // draws the text onto the generator, applying any styles.
-        var spriteWidth = 16;
-
-        var styleOffset = 0;
+        let styleOffset = 0;
         if (styles.isBold && text.length > 0) {
             styleOffset += dpi;
         }
-        let currentGlyphPageCode = -1;
         let glyphPage = undefined;
 
         // draw each character into the buffer
         let lineWidth = (styles.isStrikethrough && text.length > 0) ? dpi : 0;
         for (const character of text) {
             let characterCode = character.codePointAt(i);
-            let page = Math.floor(characterCode / 256);
-            let code = characterCode % 256;
-
-            if (page != currentGlyphPageCode) {
-                currentGlyphPageCode = page;
-                glyphPage = GLYPHS.getPage(this.settings.fontVersion, page);
-            }
-
-            let spriteX = (code % 16) * spriteWidth;
-            let spriteY = parseInt(code / 16) * spriteWidth;
-            this.tctx.drawImage(glyphPage.fontImage, spriteX, spriteY, spriteWidth, spriteWidth, lineWidth, 0, 16, 16);
-            lineWidth += (glyphPage.getGlyphWidth(code) + dpi) + styleOffset;
+            glyphPage = GLYPHS.getPage(characterCode, this.settings.fontVersion);
+            let [spriteX, spriteY, glyphWidth, glyphHeight, outputWidth, outputHeight] = glyphPage.getSpritePosition(characterCode);
+            this.bctx.drawImage(glyphPage.image, spriteX, spriteY, glyphWidth, glyphHeight, lineWidth, 0, outputWidth, outputHeight);
+            lineWidth += (outputWidth + dpi) + styleOffset;
         }
 
         if (styles.isBold) {
             // drawing a copy shifted to the left 1px
-            this.tctx.drawImage(this.textCanvas, 0, 0, lineWidth * dpi, 16, dpi, 0, lineWidth * dpi, 8 * dpi);
+            this.bctx.drawImage(this.textCanvas, 0, 0, lineWidth * dpi, 16, dpi, 0, lineWidth * dpi, 8 * dpi);
         }
         if (styles.isItalic) {
             // skew the image similar to how minecraft does it.
@@ -498,8 +586,8 @@ class TextGenerator {
             lineWidth += dpi * 2 - 1; // applies the offset as italics makes the line slightly bigger
             while (i < 16) {
                 row = this.tctx.getImageData(0, i, lineWidth, height);
-                this.tctx.clearRect(0, i, lineWidth, height);
-                this.tctx.putImageData(row, offset, i);
+                this.bctx.clearRect(0, i, lineWidth, height);
+                this.bctx.putImageData(row, offset, i);
 
                 offset -= 1;
                 i += height;
@@ -508,11 +596,11 @@ class TextGenerator {
         }
         if (styles.isStrikethrough) {
             // draws a line
-            this.tctx.fillRect(0, 6, lineWidth, 2);
+            this.bctx.fillRect(0, 6, lineWidth, 2);
         }
         if (styles.isUnderline) {
             // draws the underline
-            this.tctx.fillRect(0, 16, lineWidth, 2);
+            this.bctx.fillRect(0, 16, lineWidth, 2);
         }
         
         return lineWidth;
@@ -546,9 +634,13 @@ class TextGenerator {
         let fontOffsets = styles.isItalic ? -1 : 0 + styles.isStrikethrough ? -dpi : 0;
         
         // draw the drop shadow for the text
-        this.tctx.globalCompositeOperation = "source-in";
+        this.tctx.globalCompositeOperation = "source-over";
+        this.tctx.drawImage(this.baseCanvas, 0, 0);
+        this.tctx.globalCompositeOperation = "multiply";
         this.tctx.fillStyle = styles.color.dropShadow;
         this.tctx.fillRect(0, 0, lineWidth, 18);
+        this.tctx.globalCompositeOperation = "destination-atop";
+        this.tctx.drawImage(this.baseCanvas, 0, 0);
         target.drawImage(this.textCanvas, 0, 0, lineWidth, FONT_SIZE + 4, x + dpi + fontOffsets, y + dpi, lineWidth, FONT_SIZE + 4);
 
         if (styles.isObfuscated) {
@@ -559,17 +651,23 @@ class TextGenerator {
             // drawing more scrambled text
             text = this.randomizeText(text.length);
             this.drawText(text, x, styles);
-            this.tctx.globalCompositeOperation = "source-in";
+            this.tctx.globalCompositeOperation = "multiply";
         }
 
         // draw the main text for the text
+        this.tctx.globalCompositeOperation = "source-over";
+        this.tctx.drawImage(this.baseCanvas, 0, 0);
+        this.tctx.globalCompositeOperation = "multiply";
         this.tctx.fillStyle = styles.color.color;
         this.tctx.fillRect(0, 0, lineWidth, 18);
+        this.tctx.globalCompositeOperation = "destination-atop";
+        this.tctx.drawImage(this.baseCanvas, 0, 0);
         target.drawImage(this.textCanvas, 0, 0, lineWidth, FONT_SIZE + 2, x + fontOffsets, y, lineWidth, FONT_SIZE + 2);
 
         // clear the buffer and update the current x position
         this.tctx.globalCompositeOperation = "source-over";
         this.tctx.clearRect(0, 0, lineWidth, 18);
+        this.bctx.clearRect(0, 0, lineWidth, 18);
 
         if (styles.isItalic)
             lineWidth -= 2;
@@ -596,6 +694,7 @@ class TextGenerator {
 
         this.canvas.width = width;
         this.canvas.height = height;
+        this.ctx.imageSmoothingEnabled = false;
         this.width = width;
         this.height = height;
         this.drawableWidth = width - this.bgProvider.leftOffset;
@@ -667,7 +766,7 @@ class TextGenerator {
     async render() {
         if (this.isValid)
             return;
-    
+
         await this.textContent.splitText(this.text);
         
         let height = this.convertLineToYCoord(this.textContent.lines.length - 1) + FONT_SIZE + this.bgProvider.topOffset;
@@ -772,15 +871,11 @@ class TextManager {
     async splitText(text) {
         let safeText = "";
         for (const character of text) {
-            let codePage = Math.floor(character.codePointAt(0) / 256);
-            if (!GLYPHS.hasPage(this.settings.fontVersion, codePage)) {
-                const characterLoaded = await GLYPHS.loadPage(this.settings.fontVersion, codePage);
-                if (!characterLoaded) {
-                    console.warn(`Could not load ${character} from the correct page (${this.settings.version}/${codePage})`);
-                    continue;
-                }
+            if (!(await GLYPHS.hasCharacter(character.codePointAt(0), this.settings.fontVersion))) {
+                console.warn(`Could not load ${character} from the correct page (${this.settings.version}/${codePage})`);
+                continue;
             }
-            safeText += character;
+            safeText += character;            
         }
 
         this.lines = [];
@@ -1304,25 +1399,82 @@ class GlyphSprite {
         return this.fontImage;
     }
 
-    getGlyphWidth(characterIndex) {
-        return this.glyphWidths[characterIndex];
+    getSpritePosition(characterCode) {
+        let code = characterCode % 256;
+        let targetWidth = this.glyphWidths[code];
+        return [(code % 16) * 16, parseInt(code / 16) * 16, targetWidth, 16, targetWidth, 16];
+    }
+}
+
+class CustomGlyphSprite extends GlyphSprite {
+    constructor(glyphWidths, fontImage, providers) {
+        super(glyphWidths, fontImage);
+
+        this.characterCodeMap = {};
+    
+        this.glyphWidth = this.fontImage.width / providers.chars[0].length;
+        this.glyphHeight = this.fontImage.height / providers.chars.length;
+        let characterWidthIndex = 0;
+        let spriteY = 0;
+        for (const line of providers.chars) {
+            let spriteX = 0;
+            for (const character of line) {
+                this.characterCodeMap[character.codePointAt(0)] = [spriteX, spriteY, glyphWidths[characterWidthIndex]];
+                spriteX += this.glyphWidth;
+                characterWidthIndex++;
+            }
+            spriteY += this.glyphHeight;
+        }
+
+        this.characterWidth = this.fontImage.width;
+
+        if (this.glyphHeight < 16) {
+            this.outputWidthMultiplier = 2;
+            this.outputHeight = 32;
+        }
+        else {
+            this.outputWidthMultiplier = 1;
+            this.outputHeight = 16;
+        }
+    }
+
+    getSpritePosition(characterCode) {
+        let [spriteX, spriteY, spriteWidth] = this.characterCodeMap[characterCode];
+        return [spriteX, spriteY, spriteWidth, 16, this.outputWidthMultiplier * spriteWidth, this.outputHeight];
     }
 }
 
 class GlyphManager {
     constructor() {
         this.glyphs = {};
+        this.customGlyphs = {};
         this.canvas = document.createElement("canvas");
         this.ctx = this.canvas.getContext("2d", {"willReadFrequently": true});
         this.canvas.width = 257;
         this.canvas.height = 256;
+
+        this.customCanvas = document.createElement("canvas");
+        this.customCTX = this.customCanvas.getContext("2d", {"willReadFrequently": true});
     }
 
-    hasPage(fontVersion, page) {
-        return (fontVersion + "/" + page) in this.glyphs;
+    hasCharacter(characterCode, fontVersion) {
+        let codePage = Math.floor(characterCode / 256);
+        if (characterCode in this.customGlyphs || (fontVersion + "/" + codePage) in this.glyphs)
+            return true;
+
+        return GLYPHS.loadPage(fontVersion, codePage);
+    }
+
+    getPage(characterCode, fontVersion) {
+        if (characterCode in this.customGlyphs)
+            return this.customGlyphs[characterCode];
+
+        let page = Math.floor(characterCode / 256);
+        return this.glyphs[fontVersion + "/" + page];
     }
 
     loadPage(fontVersion, page) {
+        console.log(`Attempting to load ${fontVersion} with page ${page}`);
         let widths = new Array(256);
         let fontImage = new Image();
         fontImage.crossOrigin = "anonymous";
@@ -1353,10 +1505,56 @@ class GlyphManager {
         return promise;
     }
 
-    getPage(fontVersion, page) {
-        return this.glyphs[fontVersion + "/" + page];
+    loadCustomPage(provider, glyphImage) {
+        return new Promise((resolve) => {
+            let imageWidth = glyphImage.width;
+            this.customCanvas.width = imageWidth;
+            this.customCanvas.height = glyphImage.height;
+
+            this.customCTX.drawImage(glyphImage, 0, 0);
+            let imageData = this.customCTX.getImageData(0, 0, imageWidth, glyphImage.height).data;
+            let characterWidths = new Array(provider.chars.length);
+
+            let glyphsPerRow = provider.chars[0].length;
+            let glyphsPerColumn = provider.chars.length;
+            let spriteWidth = glyphImage.width / glyphsPerRow;
+            let spriteHeight = glyphImage.height / glyphsPerColumn;
+
+            for (let y = 0; y < glyphsPerColumn; y++) {
+                for (let x = 0; x < glyphsPerRow; x++) {
+                    
+                    let glyphX = (x + 1) * spriteWidth - 1;
+                    let foundPixel = false;
+                    while (!foundPixel && glyphX > x * spriteWidth - 1) {
+                        for (let glyphY = y * spriteHeight; glyphY < (y + 1) * spriteHeight; glyphY++) {
+                            // console.log(`Checking ${glyphX}/${glyphY}`);
+                            let pixel = ((glyphY * imageWidth) + glyphX) * 4;
+                            // console.log(imageData.slice(pixel, pixel + 4));
+                            if (imageData[pixel] > 0 || imageData[pixel + 1] > 0 || imageData[pixel + 2] > 0 || imageData[pixel + 3]) {
+                                foundPixel = true;
+                                break;
+                            }
+                        }
+
+                        if (!foundPixel) {
+                            glyphX--;
+                        }
+                    }
+                    characterWidths[y + x] = glyphX + 2;
+                }
+            }
+
+            let glyphPage = new CustomGlyphSprite(characterWidths, glyphImage, provider);
+            for (const character of provider.chars) {
+                this.customGlyphs[character.codePointAt(0)] = glyphPage;
+            }
+
+            resolve(true);
+        });
     }
 }
+
+let BACKGROUND_PROVIDER;
 
 const POTION_OPTIONS = {"Default": 3694022, "Speed": 3402751, "Slowness": 9154528, "Haste": 14270531, "Mining Fatigue": 4866583, "Strength": 16762624, "Instant Health": 16262179, 
             "Instant Damage": 11101546, "Jump Boost": 16646020, "Nausea": 5578058, "Regeneration": 13458603, "Resistance": 9520880, "Fire Resistance": 16750848, 
@@ -1414,7 +1612,7 @@ COLORS.forEach(color => {
 
 const DEFAULT_NBT_STATE = {"color": "&7", "bold": "", "strikethrough": "", "underline": "", "italic": "", "obfuscated": ""};
 const NBT_MAP = {
-    "color": (value) => value ? "&" + (value[0] == "#" ? value : REGISTERED_COLORS[value.toUpperCase()]).code : "",
+    "color": (value) => value ? "&" + (value[0] == "#" ? value : REGISTERED_COLORS[value.toUpperCase()].code) : "",
     "bold": (value) => value == "1b" ? "&l" : "",
     "strikethrough": (value) => value == "1b" ? "&m" : "",
     "underline": (value) => value == "1b" ? "&n" : "",
@@ -1438,7 +1636,7 @@ var DEFAULT_COLOR = GRAY;
 var DEFAULT_STYLES = new Array(STYLES.length - 1).fill(false);
 
 const GLYPHS = new GlyphManager();
-const RANDOM_INTROS = ["&cText &9Will &6Go &aHere", "&fGet &cCreative &fWith It!", "&6&lBIG &fWords &b&lGo &fHere", "&fHere's a Canvas...\n     &e&oGo &a&oPaint!"];
+const RANDOM_INTROS = ["&aThis aligns\n&f &8┃ &7Right-Click to&f Claim"];//["&cText &9Will &6Go &aHere", "&fGet &cCreative &fWith It!", "&6&lBIG &fWords &b&lGo &fHere", "&fHere's a Canvas...\n     &e&oGo &a&oPaint!"];
 const TOAST_TYPES = {error: {color: "#ff5555"}, issue: {color: "#ffff55"}, success: {color: "#55ff55"}};
 
 var canvas;
@@ -1474,15 +1672,15 @@ function convertMinecraftComponentToText(component, nbtState) {
             if (key in DEFAULT_NBT_STATE) state[key] = NBT_MAP[key](component[key]);
         }
 
-        if (component.extra)
-            component.extra.forEach(subComponent => result += convertMinecraftComponentToText(subComponent, state))
-
         if (component.text && component.text.length > 0) {
             let values = Object.values(state);
             for (const key of values)
                 result += key;
             result += component.text;
         }
+
+        if (component.extra)
+            component.extra.forEach(subComponent => result += convertMinecraftComponentToText(subComponent, state))
     } else {
         if (component.length > 0) {
             let values = Object.values(state);
@@ -1732,6 +1930,8 @@ function createToast(type, text, subText, errorMessage, debugInformation) {
 }
 
 window.addEventListener("load", async (event) => {
+    BACKGROUND_PROVIDER = new BackgroundProviderManager();
+
     toastContainer = document.getElementById("toast-container");
     toastTemplate = document.getElementById("toast-template");
 
@@ -1997,7 +2197,8 @@ window.addEventListener("load", async (event) => {
         let json;
         try {
             // order of operations for regex a) fix lists containing B, I or S. b) remove any string wrapped json strings c) wrap keys with quotation marks. d) remove boolean, short, int, long, float or double for data types
-            data = data.replace(/(^\s*[a-zA-Z:_0-9]*:\s)\[[BIS];/gm, "$1[").replace(/(^\s*[a-zA-Z_0-9]*: )'[^']*'(|,)/gm, "$1\"deleted\"$2").replace(/^\s*([a-zA-Z:_0-9]*):\s/gm, '"$1": ').replace(/:\s*(-?\d+(?:\.\d+)?[bBsSlLfFdD]?)/g, ': "$1"');
+            //data = data.replace(/(^\s*[a-zA-Z:_0-9]*:\s)\[[BIS];/gm, "$1[").replace(/(^\s*[a-zA-Z_0-9]*: )'[^']*'(|,)/gm, "$1\"deleted\"$2").replace(/^\s*([a-zA-Z:_0-9]*):\s/gm, '"$1": ').replace(/:\s*(-?\d+(?:\.\d+)?[bBsSlLfFdD]?)/g, ': "$1"');
+            data = data.replace(/([{,])([a-zA-Z]+)/gm, "$1\"$2\"").replace(/:([0-9]+)([bL])/gm, ":\"$1$2\"");
             json = JSON.parse(data);
         } catch (error) {
             const errorData = createDebugInformation("jsonParsing", `Could not parse the content ${data}.`);
@@ -2013,20 +2214,20 @@ window.addEventListener("load", async (event) => {
             
             let tints = [];
             if (itemID == "player head" || itemID == "skull") {
-                let skullData = json.components?.["minecraft:profile"]?.properties;
+                let skullData = json["minecraft:profile"]?.properties;
                 if (skullData) tints.push(skullData[0]?.value);
             }
             selectItem(itemID, tints);
         }
 
         let itemLore = [];
-        let itemName = json.components?.["minecraft:custom_name"];
+        let itemName = json["minecraft:custom_name"];
         if (itemName == undefined)
             createToast("issue", "There was an issue trying to retrieve the name for this item.");
         else 
             itemLore.push(convertMinecraftComponentToText(itemName));
 
-        let extractedLore = json.components?.["minecraft:lore"];
+        let extractedLore = json["minecraft:lore"];
         if (itemLore == undefined)
             createToast("issue", "There was an issue trying to retrieve the item lore for this item.", undefined, "Click me to copy relevant debug data to your clipboard", {});
         else {
@@ -2105,6 +2306,9 @@ window.addEventListener("load", async (event) => {
     settings.getCallback("export-type").invoke(settings.getSetting("export-type"));
     
     await canvas.redrawImage();
+
+    console.log(canvas, canvas.textRenderer);
+    // await get_files();
 });
 
 function copyToClipboard() {
@@ -2115,4 +2319,259 @@ function downloadImage() {
     const lines = textarea.value.split("\n", 2);
     let itemName = lines.length > 1 ? lines[0].replaceAll(/[#%&{}<>*?\/$!'":@+`|= ]/g, "") : "GeneratedItem"; 
     canvas.downloadImage(itemName);
+}
+
+class DirectorySearchTree {
+    constructor() {
+        this.tree = {};
+    }
+
+    addNode(node, value) {
+        let branches = node.split("/");
+        let current = this.tree;
+        
+        let index = 0;
+        while (index < branches.length - 1) {
+            let nextElement = branches[index];
+            if (!(nextElement in current)) {
+                current[nextElement] = {};
+            }
+
+            current = current[nextElement];
+            index++;
+        }
+
+        current[branches[index]] = value;
+    }
+
+    getNode(nodePath) {
+        let branches = nodePath.split("/");
+        let current = this.tree;
+
+        let index = 0;
+        while (index < branches.length - 1) {
+            let nextElement = branches[index];
+            if (!(nextElement in current)) {
+                return undefined;
+            }
+
+            current = current[nextElement];
+            index++;
+        }
+
+        return branches[index] in current ? current[branches[index]] : undefined;
+    }
+}
+
+async function load_texture_pack() {
+    let entries = document.getElementById("texture-pack-upload").files;
+
+    // crawl through all of the provider files
+    let foundFiles = new DirectorySearchTree();
+    for (const file of entries) {
+        foundFiles.addNode(file.webkitRelativePath, file);
+    }
+
+    console.log(foundFiles.tree);
+
+    let rootFolderName = entries[0].webkitRelativePath.substring(0, entries[0].webkitRelativePath.indexOf("/"));
+    let packLocations = foundFiles.getNode(rootFolderName + "/pack_locations.json");
+    let packLocationData = await readTextFile(packLocations);
+
+    if (packLocationData["font"]) {
+        let items = foundFiles.getNode(rootFolderName + "/" + packLocationData["font"]);
+        for (const file of Object.values(items)) {
+            let fontDetails = await readTextFile(file);
+            for (const provider of fontDetails.providers) {
+                if (provider.type == "bitmap") {
+                    let result = await readImageFile(foundFiles.getNode(rootFolderName + "/assets/" + provider.file.replace(/:/, "/textures/")));
+                    GLYPHS.loadCustomPage(provider, result);
+                }
+            }
+        }
+    }
+    if (packLocationData["borders"]) {
+        let createdBorders = {};
+
+        let items = foundFiles.getNode(rootFolderName + "/" + packLocationData["borders"]);
+        console.log(items);
+        for (const file of Object.keys(items)) {
+            let type = file.replaceAll(/\.mcmeta|_background|_frame|\.png/gm, "");
+            console.log(type);
+            if (type in createdBorders) {
+                console.log("Already created " + type);
+                continue;
+            }
+                
+            let frameSettingsFileName = type + "_frame.png.mcmeta";
+            if (!(frameSettingsFileName in items)) {
+                console.log("Couldn't Find Frame Settings" + frameSettingsFileName);
+                continue;
+            }
+
+            let frameImageFileName = type + "_frame.png";
+            if (!(frameImageFileName in items)) {
+                console.log("Couldn't Find Frame Image" + frameImageFileName)
+                continue;
+            }
+
+            let backgroundSettingsFileName = type + "_background.png.mcmeta";
+            if (!(backgroundSettingsFileName in items)) {
+                console.log("Couldn't Find Background Settings" + backgroundSettingsFileName)
+                continue;
+            }
+
+            let backgroundFileName = type + "_background.png";
+            if (!(backgroundFileName in items)) {
+                console.log("Couldn't Find Background Image " + backgroundFileName)
+                continue;
+            }
+            console.log("TYPE!" + type)
+            let frameImage = await readImageFile(items[frameImageFileName]);
+            let frameSettings = await readTextFile(items[frameSettingsFileName]);
+            let backgroundImage = await readImageFile(items[backgroundFileName]);
+            let backgroundSettings = await readTextFile(items[backgroundSettingsFileName]);
+
+            let backgroundProvider = new ImageProvider(frameImage, frameSettings, backgroundImage, backgroundSettings);
+            BACKGROUND_PROVIDER.addProvider(type, backgroundProvider);
+            console.log(backgroundProvider);
+            createdBorders[type] = 1;
+        }
+    }
+}
+
+let number = 0;
+
+async function get_files() {
+    // await load_texture_pack();
+    // number++;
+
+    // if (number < 1) {
+    //     return;
+    // } 
+
+
+    // let backgroundImage = document.getElementById("uncommon-border");
+    // console.log(backgroundImage);
+    // canvas.textRenderer.backgroundProviders["rare"] = new ImageProvider(backgroundImage, {
+    // "gui": {
+    //     "scaling": {
+    //         "border": {
+    //             "bottom": 12,
+    //             "left": 10,
+    //             "right": 10,
+    //             "top": 12
+    //         },
+    //         "height": 144,
+    //         "stretch_inner": true,
+    //         "type": "nine_slice",
+    //         "width": 144
+    //     }
+    // }
+// })
+    // canvas.textRenderer.bgProvider = canvas.textRenderer.backgroundProviders["rare"]
+
+
+    // GLYPHS.loadCustomPage({"type": "bitmap",
+    //         "file": "stabled:unicode/mouse_clicks.png",
+    //         "height": 8,
+    //         "ascent": 8,
+    //         "chars": [
+    //             "\ue217",
+    //             "\ue218",
+    //             "\ue219"
+    //         ]
+    //     }, document.getElementById("mouse-testing"));
+    // // GLYPHS.loadCustomPage({
+    //         "type": "bitmap",
+    //         "file": "stabled:unicode/tag/rarity/epic.png",
+    //         "height": 9,
+    //         "ascent": 7,
+    //         "chars": [
+    //             "\ue270"
+    //         ]
+    //     }, document.getElementById("epic-testing"));
+    
+    
+    
+    
+    // let fontDetails = document.getElementById("font-json").files;
+    // let entries = document.getElementById("target-font").files;
+    // let thing = await readTextFile(fontDetails[0]);
+    // // console.log(thing);
+    // // console.log("!!!!!!!!!!!!!");
+
+    // // crawl through all of the provider files
+    // let foundFiles = {};
+    // for (const file of entries) {
+    //     foundFiles[file.webkitRelativePath] = file;
+    // }
+
+    // for (const provider of thing.providers) {
+    //     if (provider.type == "bitmap") {
+    //         let result = await readImageFile(foundFiles["assets/" + provider.file.replace(/:/, "/textures/")]);
+    //         GLYPHS.loadCustomPage(provider, result);
+    //     }
+    // }
+}
+
+function readTextFile(file) {
+    return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = (readFile) => {
+            resolve(JSON.parse(readFile.target.result));
+        }
+        reader.onerror = () => {
+            console.log("There was an error. Can't really help you out there...");
+            reject("uhhhhhhhhhhhhhhhhhhhhhhhh");
+        }
+        reader.readAsText(file, 'UTF-8');    
+    })
+}
+
+function readImageFile(file) {
+    return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = (readImage) => {
+            let image = new Image();
+            image.onload = () => {
+                resolve(image);
+            }
+            image.src = readImage.target.result;
+        }
+        reader.onerror = () => {
+            console.log("There was an error. Can't really help you out there...");
+            reject("uhhhhhhhhhhhhhhhhhhhhhhhh");
+        }
+        reader.readAsDataURL(file);
+    });
+}
+
+function convertToBits(bits) {
+    let fakeCanvas = document.createElement("canvas");
+    fakeCanvas.width = 16;
+    fakeCanvas.height = 16;
+    
+    let fakeCTX = fakeCanvas.getContext("2d");
+    let testData = fakeCTX.getImageData(0, 0, 16, 16);
+
+    let dataArray = testData.data;
+
+    let pixelCoord = 0;
+    for (let i = 0; i < bits.length; i++) {
+        let section = parseInt(bits[i], 16).toString(2).padStart(4, "0");
+        
+        for (const character of section) {
+            if (character == "1") {
+                dataArray[pixelCoord] = 255;
+                dataArray[pixelCoord + 1] = 255;
+                dataArray[pixelCoord + 2] = 255;
+                dataArray[pixelCoord + 3] = 255;
+            }
+
+            pixelCoord += 4;
+        }
+    }
+    fakeCTX.putImageData(testData, 0, 0);
+    document.body.appendChild(fakeCanvas);
 }
