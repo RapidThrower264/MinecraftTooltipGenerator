@@ -2193,7 +2193,7 @@ window.addEventListener("load", async (event) => {
         try {
             // order of operations for regex a) fix lists containing B, I or S. b) remove any string wrapped json strings c) wrap keys with quotation marks. d) remove boolean, short, int, long, float or double for data types
             //data = data.replace(/(^\s*[a-zA-Z:_0-9]*:\s)\[[BIS];/gm, "$1[").replace(/(^\s*[a-zA-Z_0-9]*: )'[^']*'(|,)/gm, "$1\"deleted\"$2").replace(/^\s*([a-zA-Z:_0-9]*):\s/gm, '"$1": ').replace(/:\s*(-?\d+(?:\.\d+)?[bBsSlLfFdD]?)/g, ': "$1"');
-            data = data.replace(/id:\[[0-9,I;-]+\],/gm, "").replace(/([{,])([a-zA-Z]+)/gm, "$1\"$2\"").replace(/:([0-9]+)([bL])/gm, ":\"$1$2\"");
+            data = data.replace(/id:\[[0-9,I;-]+\],/gm, "").replace(/([{,])([a-zA-Z_]+)/gm, "$1\"$2\"").replace(/:([0-9-.]+)([bLd])/gm, ":\"$1$2\"");
             json = JSON.parse(data);
         } catch (error) {
 	    console.log(error);
