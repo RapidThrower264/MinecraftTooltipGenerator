@@ -248,6 +248,10 @@ class BackgroundProviderManager {
     getProvider(providerName) {
         return this.providers[providerName] ?? this.providers["default"];
     }
+
+    hasProvider(providerName) {
+        return providerName in this.providers;
+    }
 }
 
 class BackgroundProvider {
@@ -2229,6 +2233,14 @@ window.addEventListener("load", async (event) => {
         else {
             for (const component of extractedLore)
                 itemLore.push(convertMinecraftComponentToText(component))
+        }
+
+        let borderStyle = json["minecraft:tooltip_style"];
+        if (borderStyle != undefined) {
+            let style = borderStyle.replace("minecraft:", "");
+            if (BACKGROUND_PROVIDER.hasProvider(style)) {
+                settings.changeSetting("background-type", style);
+            }
         }
         
         let itemText = "";
